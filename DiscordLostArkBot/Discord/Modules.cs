@@ -38,12 +38,12 @@ namespace DiscordLostArkBot.Discord
 
             var eb = raidInfo.GetEmbedBuilder();
             var messageSent = await Context.Channel.SendMessageAsync("", false, eb.Build());
-            await messageSent.AddReactionAsync(new Emoji(Db.EmojiSwordCrossed));
-            await messageSent.AddReactionAsync(new Emoji(Db.EmojiShield));
+            await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiSwordCrossed));
+            await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
 
             raidInfo.ChannelId = messageSent.Channel.Id;
             raidInfo.MessageId = messageSent.Id;
-            Db.Ins.AddRaidInfo(raidInfo);
+            DB.Ins.AddRaidInfo(raidInfo);
             await NotionBotClient.Ins.CreatePage(raidInfo);
         }
         
@@ -65,12 +65,12 @@ namespace DiscordLostArkBot.Discord
 
             var eb = raidInfo.GetEmbedBuilder();
             var messageSent = await Context.Channel.SendMessageAsync("", false, eb.Build());
-            await messageSent.AddReactionAsync(new Emoji(Db.EmojiSwordCrossed));
-            await messageSent.AddReactionAsync(new Emoji(Db.EmojiShield));
+            await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiSwordCrossed));
+            await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
 
             raidInfo.ChannelId = messageSent.Channel.Id;
             raidInfo.MessageId = messageSent.Id;
-            Db.Ins.AddRaidInfo(raidInfo);
+            DB.Ins.AddRaidInfo(raidInfo);
             await NotionBotClient.Ins.CreatePage(raidInfo);
         }
     }

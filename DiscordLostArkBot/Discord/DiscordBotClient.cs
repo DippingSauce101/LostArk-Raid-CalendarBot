@@ -48,7 +48,7 @@ namespace DiscordLostArkBot.Discord
 
         private async Task OnClientMessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
         {
-            var raidInfo = Db.Ins.GetRaidInfo(channel.Id, message.Id);
+            var raidInfo = DB.Ins.GetRaidInfo(channel.Id, message.Id);
             if (raidInfo == null)
             {
                 Console.WriteLine($"Raid info not found for deleted message: {message.Id}");
@@ -89,10 +89,10 @@ namespace DiscordLostArkBot.Discord
             SocketReaction reaction)
         {
             if (reaction.User.Value.IsBot) return;
-            if (Db.IsRaidRoleEmote(reaction.Emote) == false) return;
+            if (RaidEmoji.IsRaidRoleEmote(reaction.Emote) == false) return;
             Console.WriteLine($"OnReactionAdded({reaction.Emote.Name})");
 
-            var raidInfo = Db.Ins.GetRaidInfo(channel.Id, reaction.MessageId);
+            var raidInfo = DB.Ins.GetRaidInfo(channel.Id, reaction.MessageId);
             if (raidInfo == null)
             {
                 Console.WriteLine("Raid info not found!");
@@ -110,8 +110,8 @@ namespace DiscordLostArkBot.Discord
                     return;
 
                 var emojiToRemove = currentRole == RaidInfo.RaidPlayer.Role.Deal
-                    ? new Emoji(Db.EmojiSwordCrossed)
-                    : new Emoji(Db.EmojiShield);
+                    ? new Emoji(RaidEmoji.EmojiSwordCrossed)
+                    : new Emoji(RaidEmoji.EmojiShield);
                 await userMessage.RemoveReactionAsync(emojiToRemove, reaction.UserId);
             }
 
@@ -125,10 +125,10 @@ namespace DiscordLostArkBot.Discord
             SocketReaction reaction)
         {
             if (reaction.User.Value.IsBot) return;
-            if (Db.IsRaidRoleEmote(reaction.Emote) == false) return;
+            if (RaidEmoji.IsRaidRoleEmote(reaction.Emote) == false) return;
             Console.WriteLine($"OnReactionRemoved({reaction.Emote.Name})");
 
-            var raidInfo = Db.Ins.GetRaidInfo(channel.Id, reaction.MessageId);
+            var raidInfo = DB.Ins.GetRaidInfo(channel.Id, reaction.MessageId);
             if (raidInfo == null)
             {
                 Console.WriteLine("Raid info not found!");

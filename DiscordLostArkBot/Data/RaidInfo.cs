@@ -118,33 +118,24 @@ namespace DiscordLostArkBot.Data
         {
             var player = RaidPlayers[index];
             if (player.IsEmpty())
-                return $@"{RoleToEmojiString(player.UserRole)}{index + 1}번{RoleToKrString(player.UserRole)}";
-            return $@"{RoleToEmojiString(player.UserRole)}<@{player.UserId}>";
+                return $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}{index + 1}번{RaidEmoji.RoleToKrString(player.UserRole)}";
+            return $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}<@{player.UserId}>";
         }
 
         private string GetNotionRaidPlayerString(int index)
         {
             var player = RaidPlayers[index];
             if (player.IsEmpty())
-                return $@"{RoleToEmojiString(player.UserRole)}{index + 1}번{RoleToKrString(player.UserRole)}";
-            return $@"{RoleToEmojiString(player.UserRole)}{player.UserName}";
+                return $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}{index + 1}번{RaidEmoji.RoleToKrString(player.UserRole)}";
+            return $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}{player.UserName}";
         }
 
-        public static string RoleToKrString(RaidPlayer.Role role)
-        {
-            return role == RaidPlayer.Role.Deal ? "딜러" : "서포터";
-        }
-
-        public static string RoleToEmojiString(RaidPlayer.Role role)
-        {
-            return role == RaidPlayer.Role.Deal ? Db.EmojiSwordCrossed : Db.EmojiShield;
-        }
 
         public static RaidPlayer.Role EmojiStringToRole(string emojiStr)
         {
-            if (emojiStr.Equals(Db.EmojiShield))
+            if (emojiStr.Equals(RaidEmoji.EmojiShield))
                 return RaidPlayer.Role.Support;
-            if (emojiStr.Equals(Db.EmojiSwordCrossed))
+            if (emojiStr.Equals(RaidEmoji.EmojiSwordCrossed))
                 return RaidPlayer.Role.Deal;
             throw new NotImplementedException();
         }
