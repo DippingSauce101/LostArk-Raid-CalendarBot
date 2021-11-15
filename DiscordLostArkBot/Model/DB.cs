@@ -1,4 +1,5 @@
-﻿using DiscordLostArkBot.Service;
+﻿using System.Runtime.CompilerServices;
+using DiscordLostArkBot.Service;
 using DiscordLostArkBot.Utilities;
 
 namespace DiscordLostArkBot.Model
@@ -13,9 +14,15 @@ namespace DiscordLostArkBot.Model
         {
             //Initialize Datas
             RaidInfoCollection = new RaidInfoCollection();
+        }
+
+        public static DB Init()
+        {
+            var ins = Ins;
 
             //Initialize Presenters
-            ServiceHolder.InitServices(RaidInfoCollection);
+            ServiceHolder.InitServices(DB.Ins.RaidInfoCollection);
+            return DB.Ins;
         }
 
         private RaidInfoCollection RaidInfoCollection { get; }
