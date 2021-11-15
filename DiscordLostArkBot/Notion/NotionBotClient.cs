@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-using DiscordLostArkBot.Data;
-using DiscordLostArkBot.Setting;
+using DiscordLostArkBot.Constants;
+using DiscordLostArkBot.Model;
+using DiscordLostArkBot.Model.RaidInfo;
 using DiscordLostArkBot.Utilities;
 using Notion.Client;
 
