@@ -4,9 +4,11 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using DiscordLostArkBot.Data;
+using DiscordLostArkBot.Constants;
+using DiscordLostArkBot.Model;
+using DiscordLostArkBot.Model.RaidInfo;
 using DiscordLostArkBot.Notion;
-using DiscordLostArkBot.Setting;
+using DiscordLostArkBot.Presenter;
 using DiscordLostArkBot.Utilities;
 
 namespace DiscordLostArkBot.Discord
@@ -48,7 +50,7 @@ namespace DiscordLostArkBot.Discord
 
         private async Task OnClientMessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
         {
-            var raidInfo = Db.Ins.GetRaidInfo(channel.Id, message.Id);
+            var raidInfo = Presenters.RaidInfo.FindRaidInfo(channel.Id, message.Id);
             if (raidInfo == null)
             {
                 Console.WriteLine($"Raid info not found for deleted message: {message.Id}");
@@ -89,34 +91,20 @@ namespace DiscordLostArkBot.Discord
             SocketReaction reaction)
         {
             if (reaction.User.Value.IsBot) return;
-            if (Db.IsRaidRoleEmote(reaction.Emote) == false) return;
+            if (RaidEmoji.IsRaidRoleEmote(reaction.Emote) == false) return;
             Console.WriteLine($"OnReactionAdded({reaction.Emote.Name})");
 
-            var raidInfo = Db.Ins.GetRaidInfo(channel.Id, reaction.MessageId);
-            if (raidInfo == null)
+            var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, reaction.MessageId);
+            var targetRole = RaidEmoji.EmojiStringToRole(reaction.Emote.Name);
+            if (Presenters.RaidInfo.CanAddPlayer(discordRaidInfoKey, targetRole) == false)
             {
-                Console.WriteLine("Raid info not found!");
                 return;
             }
-
-            var targetRole = RaidInfo.EmojiStringToRole(reaction.Emote.Name);
-            if (raidInfo.IsRoleFull(targetRole)) return;
+            
             var userMessage = await message.GetUserMessageAsync();
-            if (raidInfo.UserAlreadySeated(reaction.UserId))
-            {
-                var currentRole = raidInfo.GetUserRole(reaction.UserId);
-                if (targetRole == currentRole)
-                    //이유는 모르겠지만 같은 이모지가 두번 추가되고 있네? 그냥 리턴
-                    return;
-
-                var emojiToRemove = currentRole == RaidInfo.RaidPlayer.Role.Deal
-                    ? new Emoji(Db.EmojiSwordCrossed)
-                    : new Emoji(Db.EmojiShield);
-                await userMessage.RemoveReactionAsync(emojiToRemove, reaction.UserId);
-            }
-
-            raidInfo.AddOrChangePlayerRole(reaction.UserId, targetRole);
-            await RefreshRaidMessage(raidInfo, userMessage);
+            await Presenters.RaidInfo.RemoveDiscordOldRoleReaction(discordRaidInfoKey, reaction.UserId, userMessage, targetRole);
+            Presenters.RaidInfo.AddOrChangePlayerRole(discordRaidInfoKey, reaction.UserId, targetRole);
+            await Presenters.RaidInfo.RefreshDiscordRaidMessage(discordRaidInfoKey, userMessage);
             await NotionBotClient.Ins.UpdatePage(raidInfo);
         }
 
@@ -125,31 +113,19 @@ namespace DiscordLostArkBot.Discord
             SocketReaction reaction)
         {
             if (reaction.User.Value.IsBot) return;
-            if (Db.IsRaidRoleEmote(reaction.Emote) == false) return;
+            if (RaidEmoji.IsRaidRoleEmote(reaction.Emote) == false) return;
             Console.WriteLine($"OnReactionRemoved({reaction.Emote.Name})");
 
-            var raidInfo = Db.Ins.GetRaidInfo(channel.Id, reaction.MessageId);
-            if (raidInfo == null)
-            {
-                Console.WriteLine("Raid info not found!");
-                return;
-            }
-
             var userMessage = await message.GetUserMessageAsync();
-            var targetRole = RaidInfo.EmojiStringToRole(reaction.Emote.Name);
-            raidInfo.RemovePlayerRole(reaction.UserId, targetRole);
-            await RefreshRaidMessage(raidInfo, userMessage);
+            var targetRole = RaidEmoji.EmojiStringToRole(reaction.Emote.Name);
+            
+            var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, reaction.MessageId);
+            Presenters.RaidInfo.RemovePlayerRole(discordRaidInfoKey, reaction.UserId, targetRole);
+            await Presenters.RaidInfo.RefreshDiscordRaidMessage(discordRaidInfoKey, userMessage);
             await NotionBotClient.Ins.UpdatePage(raidInfo);
         }
 
-        private async Task RefreshRaidMessage(RaidInfo raidInfo, IUserMessage userMessage)
-        {
-            await userMessage.ModifyAsync(x =>
-            {
-                var eb = raidInfo.GetEmbedBuilder();
-                x.Embed = eb.Build();
-            });
-        }
+        
 
         private Task OnClientLogReceived(LogMessage msg)
         {

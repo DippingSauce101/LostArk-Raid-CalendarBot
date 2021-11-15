@@ -2,8 +2,11 @@
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using DiscordLostArkBot.Data;
+using DiscordLostArkBot.Constants;
+using DiscordLostArkBot.Model;
+using DiscordLostArkBot.Model.RaidInfo;
 using DiscordLostArkBot.Notion;
+using DiscordLostArkBot.Presenter;
 
 namespace DiscordLostArkBot.Discord
 {
@@ -38,12 +41,11 @@ namespace DiscordLostArkBot.Discord
 
             var eb = raidInfo.GetEmbedBuilder();
             var messageSent = await Context.Channel.SendMessageAsync("", false, eb.Build());
-            await messageSent.AddReactionAsync(new Emoji(Db.EmojiSwordCrossed));
-            await messageSent.AddReactionAsync(new Emoji(Db.EmojiShield));
+            await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiSwordCrossed));
+            await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
 
-            raidInfo.ChannelId = messageSent.Channel.Id;
-            raidInfo.MessageId = messageSent.Id;
-            Db.Ins.AddRaidInfo(raidInfo);
+            raidInfo.DiscordMessageKey = new RaidInfo.DiscordKey(messageSent.Channel.Id, messageSent.Id);
+            Presenters.RaidInfo.Add(raidInfo);
             await NotionBotClient.Ins.CreatePage(raidInfo);
         }
         
@@ -59,18 +61,15 @@ namespace DiscordLostArkBot.Discord
             
             var raidInfo = new EightRaidInfo();
             raidInfo.Title = raidCommandParam.Title;
-            //유저가 입력한 DateTime은 UTC Time으로 입력이 들어오는듯.
-            //한국 시간으로 입력->UTC 타임
             raidInfo.DateTime = kstTime;
 
             var eb = raidInfo.GetEmbedBuilder();
             var messageSent = await Context.Channel.SendMessageAsync("", false, eb.Build());
-            await messageSent.AddReactionAsync(new Emoji(Db.EmojiSwordCrossed));
-            await messageSent.AddReactionAsync(new Emoji(Db.EmojiShield));
+            await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiSwordCrossed));
+            await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
 
-            raidInfo.ChannelId = messageSent.Channel.Id;
-            raidInfo.MessageId = messageSent.Id;
-            Db.Ins.AddRaidInfo(raidInfo);
+            raidInfo.DiscordMessageKey = new RaidInfo.DiscordKey(messageSent.Channel.Id, messageSent.Id);
+            Presenters.RaidInfo.Add(raidInfo);
             await NotionBotClient.Ins.CreatePage(raidInfo);
         }
     }
