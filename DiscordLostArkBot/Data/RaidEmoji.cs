@@ -1,5 +1,6 @@
 ﻿using System;
 using Discord;
+using DiscordLostArkBot.Model.RaidInfo;
 
 namespace DiscordLostArkBot.Data
 {

@@ -1,4 +1,4 @@
-﻿namespace DiscordLostArkBot.Setting
+﻿namespace DiscordLostArkBot.Constants
 {
     public static class Settings
     {
