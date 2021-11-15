@@ -18,8 +18,6 @@ namespace DiscordLostArkBot.Model
 
         public static DB Init()
         {
-            var ins = Ins;
-
             //Initialize Presenters
             ServiceHolder.InitServices(DB.Ins.RaidInfoCollection);
             return DB.Ins;

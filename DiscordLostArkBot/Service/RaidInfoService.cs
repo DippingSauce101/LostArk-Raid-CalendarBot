@@ -35,13 +35,6 @@ namespace DiscordLostArkBot.Service
             return FindRaidInfo(discordKey.ChannelId, discordKey.MessageId) != null;
         }
 
-        public string GetNotionCalendarPageId(RaidInfo.DiscordKey discordKey)
-        {
-            var raidInfo = FindRaidInfo(discordKey);
-            if (raidInfo == null) return string.Empty;
-            return raidInfo.NotionCalenderPageId;
-        }
-
         public bool CanAddPlayer(RaidInfo.DiscordKey discordKey, RaidInfo.RaidPlayer.Role requestedRole)
         {
             var raidInfo = FindRaidInfo(discordKey);
@@ -50,57 +43,12 @@ namespace DiscordLostArkBot.Service
 
             return true;
         }
-
-        public async Task RemoveDiscordOldRoleReaction(RaidInfo.DiscordKey discordKey, ulong userId,
-            IUserMessage userMessage, RaidInfo.RaidPlayer.Role newRole)
-        {
-            if (UserAlreadySeated(discordKey, userId))
-            {
-                var raidInfo = FindRaidInfo(discordKey);
-                var currentRole = raidInfo.GetUserRole(userId);
-                if (newRole == currentRole)
-                    //이유는 모르겠지만 같은 이모지가 두번 추가되고 있네? 그냥 리턴
-                    return;
-
-                var emojiToRemove = currentRole == RaidInfo.RaidPlayer.Role.Deal
-                    ? new Emoji(RaidEmoji.EmojiSwordCrossed)
-                    : new Emoji(RaidEmoji.EmojiShield);
-                await userMessage.RemoveReactionAsync(emojiToRemove, userId);
-            }
-        }
-
+        
         public bool UserAlreadySeated(RaidInfo.DiscordKey discordKey, ulong userId)
         {
             var raidInfo = FindRaidInfo(discordKey);
             if (raidInfo == null) return false;
             return raidInfo.UserAlreadySeated(userId);
-        }
-
-        public async Task RefreshDiscordRaidMessage(RaidInfo.DiscordKey discordKey, IUserMessage userMessage)
-        {
-            var raidInfo = FindRaidInfo(discordKey);
-            if (raidInfo == null) return;
-            await userMessage.ModifyAsync(x =>
-            {
-                var eb = raidInfo.GetEmbedBuilder();
-                x.Embed = eb.Build();
-            });
-        }
-
-        public Dictionary<string, PropertyValue> GetNotionCalendarPageProperies(RaidInfo.DiscordKey discordKey)
-        {
-            var raidInfo = FindRaidInfo(discordKey);
-            if (raidInfo == null) return null;
-            return raidInfo.GetNotionPageProperties();
-        }
-
-        public bool SetNotionCalendarPageId(RaidInfo.DiscordKey discordKey, string notionCalendarPageId)
-        {
-            var raidInfo = FindRaidInfo(discordKey);
-            if (raidInfo == null) return false;
-
-            raidInfo.NotionCalenderPageId = notionCalendarPageId;
-            return true;
         }
 
         public bool AddOrChangePlayerRole(RaidInfo.DiscordKey discordKey, ulong userId, RaidInfo.RaidPlayer.Role role)
@@ -134,6 +82,66 @@ namespace DiscordLostArkBot.Service
 
             return removed;
         }
+        
+        #region Notion Logics
+
+        public string GetNotionCalendarPageId(RaidInfo.DiscordKey discordKey)
+        {
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) return string.Empty;
+            return raidInfo.NotionCalenderPageId;
+        }
+
+        public Dictionary<string, PropertyValue> GetNotionCalendarPageProperies(RaidInfo.DiscordKey discordKey)
+        {
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) return null;
+            return raidInfo.GetNotionPageProperties();
+        }
+
+        public bool SetNotionCalendarPageId(RaidInfo.DiscordKey discordKey, string notionCalendarPageId)
+        {
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) return false;
+
+            raidInfo.NotionCalenderPageId = notionCalendarPageId;
+            return true;
+        }
+        
+        #endregion
+        
+        #region Tasks
+        
+        public async Task RemoveDiscordOldRoleReaction(RaidInfo.DiscordKey discordKey, ulong userId,
+            IUserMessage userMessage, RaidInfo.RaidPlayer.Role newRole)
+        {
+            if (UserAlreadySeated(discordKey, userId))
+            {
+                var raidInfo = FindRaidInfo(discordKey);
+                var currentRole = raidInfo.GetUserRole(userId);
+                if (newRole == currentRole)
+                    //이유는 모르겠지만 같은 이모지가 두번 추가되고 있네? 그냥 리턴
+                    return;
+
+                var emojiToRemove = currentRole == RaidInfo.RaidPlayer.Role.Deal
+                    ? new Emoji(RaidEmoji.EmojiSwordCrossed)
+                    : new Emoji(RaidEmoji.EmojiShield);
+                await userMessage.RemoveReactionAsync(emojiToRemove, userId);
+            }
+        }
+
+        public async Task RefreshDiscordRaidMessage(RaidInfo.DiscordKey discordKey, IUserMessage userMessage)
+        {
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) return;
+            await userMessage.ModifyAsync(x =>
+            {
+                var eb = raidInfo.GetEmbedBuilder();
+                x.Embed = eb.Build();
+            });
+        }
+        
+        #endregion
 
         private RaidInfo FindRaidInfo(ulong discordChannelId, ulong discordMessageId)
         {
