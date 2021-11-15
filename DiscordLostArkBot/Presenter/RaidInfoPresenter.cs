@@ -1,17 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord;
 using DiscordLostArkBot.Constants;
 using DiscordLostArkBot.Model;
 using DiscordLostArkBot.Model.RaidInfo;
 using DiscordLostArkBot.Utilities;
+using Notion.Client;
 
 namespace DiscordLostArkBot.Presenter
 {
     /// <summary>
     /// RaidInfo를 조작하는 모든 로직은 이 클래스를 통해야 한다!
     /// </summary>
-    public partial class RaidInfoPresenter
+    public class RaidInfoPresenter
     {
         private RaidInfoCollection _raidInfoCollection;
         public RaidInfoPresenter(RaidInfoCollection raidInfoCollection)
@@ -28,15 +30,22 @@ namespace DiscordLostArkBot.Presenter
         {
             _raidInfoCollection.Remove(raidInfo);
         }
-        
-        private RaidInfo FindRaidInfo(ulong discordChannelId, ulong discordMessageId)
+
+        public bool Exists(RaidInfo.DiscordKey discordKey)
         {
-            return _raidInfoCollection.FindRaidInfo(discordChannelId, discordMessageId);
+            return FindRaidInfo(discordKey.ChannelId, discordKey.MessageId) != null;
+        }
+
+        public string GetNotionCalendarPageId(RaidInfo.DiscordKey discordKey)
+        {
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) return string.Empty;
+            return raidInfo.NotionCalenderPageId;
         }
 
         public bool CanAddPlayer(RaidInfo.DiscordKey discordKey, RaidInfo.RaidPlayer.Role requestedRole)
         {
-            var raidInfo = FindRaidInfo(discordKey.ChannelId, discordKey.MessageId);
+            var raidInfo = FindRaidInfo(discordKey);
             if (raidInfo == null) return false;
             if (raidInfo.IsRoleFull(requestedRole)) return false;
 
@@ -47,7 +56,7 @@ namespace DiscordLostArkBot.Presenter
         {
             if (UserAlreadySeated(discordKey, userId))
             {
-                var raidInfo = FindRaidInfo(discordKey.ChannelId, discordKey.MessageId);
+                var raidInfo = FindRaidInfo(discordKey);
                 var currentRole = raidInfo.GetUserRole(userId);
                 if (newRole == currentRole)
                     //이유는 모르겠지만 같은 이모지가 두번 추가되고 있네? 그냥 리턴
@@ -62,24 +71,41 @@ namespace DiscordLostArkBot.Presenter
 
         public bool UserAlreadySeated(RaidInfo.DiscordKey discordKey, ulong userId)
         {
-            var raidInfo = FindRaidInfo(discordKey.ChannelId, discordKey.MessageId);
+            var raidInfo = FindRaidInfo(discordKey);
             if (raidInfo == null) return false;
             return raidInfo.UserAlreadySeated(userId);
         }
         
         public async Task RefreshDiscordRaidMessage(RaidInfo.DiscordKey discordKey, IUserMessage userMessage)
         {
-            var raidInfo = FindRaidInfo(discordKey.ChannelId, discordKey.MessageId);
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) return;
             await userMessage.ModifyAsync(x =>
             {
                 var eb = raidInfo.GetEmbedBuilder();
                 x.Embed = eb.Build();
             });
         }
+
+        public Dictionary<string, PropertyValue> GetNotionCalendarPageProperies(RaidInfo.DiscordKey discordKey)
+        {
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) return null;
+            return raidInfo.GetNotionPageProperties();
+        }
+
+        public bool SetNotionCalendarPageId(RaidInfo.DiscordKey discordKey, string notionCalendarPageId)
+        {
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) return false;
+
+            raidInfo.NotionCalenderPageId = notionCalendarPageId;
+            return true;
+        }
         
         public bool AddOrChangePlayerRole(RaidInfo.DiscordKey discordKey, ulong userId, RaidInfo.RaidPlayer.Role role)
         {
-            var raidInfo = FindRaidInfo(discordKey.ChannelId, discordKey.MessageId);
+            var raidInfo = FindRaidInfo(discordKey);
             if (raidInfo == null) return false;
 
             var emptySeatIndex = raidInfo.GetEmptySeatIndex(role);
@@ -92,7 +118,7 @@ namespace DiscordLostArkBot.Presenter
 
         public bool RemovePlayerRole(RaidInfo.DiscordKey discordKey, ulong userId, RaidInfo.RaidPlayer.Role role)
         {
-            var raidInfo = FindRaidInfo(discordKey.ChannelId, discordKey.MessageId);
+            var raidInfo = FindRaidInfo(discordKey);
             if (raidInfo == null) return false;
             
             var raidPlayers = raidInfo.RaidPlayers;
@@ -107,6 +133,16 @@ namespace DiscordLostArkBot.Presenter
                 }
 
             return removed;
+        }
+
+        private RaidInfo FindRaidInfo(ulong discordChannelId, ulong discordMessageId)
+        {
+            return _raidInfoCollection.FindRaidInfo(discordChannelId, discordMessageId);
+        }
+        
+        private RaidInfo FindRaidInfo(RaidInfo.DiscordKey discordKey)
+        {
+            return _raidInfoCollection.FindRaidInfo(discordKey.ChannelId, discordKey.MessageId);
         }
     }
 }

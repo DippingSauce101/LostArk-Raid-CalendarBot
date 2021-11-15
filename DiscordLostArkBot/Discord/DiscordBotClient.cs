@@ -50,14 +50,15 @@ namespace DiscordLostArkBot.Discord
 
         private async Task OnClientMessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
         {
-            var raidInfo = Presenters.RaidInfo.FindRaidInfo(channel.Id, message.Id);
-            if (raidInfo == null)
+            var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, message.Id);
+            if (Presenters.RaidInfo.Exists(discordRaidInfoKey))
             {
                 Console.WriteLine($"Raid info not found for deleted message: {message.Id}");
                 return;
             }
 
-            await NotionBotClient.Ins.DeletePage(raidInfo);
+            var notionCalendarPageId = Presenters.RaidInfo.GetNotionCalendarPageId(discordRaidInfoKey); 
+            await NotionBotClient.Ins.DeletePage(notionCalendarPageId);
         }
 
         private async Task OnClientMessage(SocketMessage messageParam)
@@ -92,7 +93,6 @@ namespace DiscordLostArkBot.Discord
         {
             if (reaction.User.Value.IsBot) return;
             if (RaidEmoji.IsRaidRoleEmote(reaction.Emote) == false) return;
-            Console.WriteLine($"OnReactionAdded({reaction.Emote.Name})");
 
             var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, reaction.MessageId);
             var targetRole = RaidEmoji.EmojiStringToRole(reaction.Emote.Name);
@@ -105,7 +105,9 @@ namespace DiscordLostArkBot.Discord
             await Presenters.RaidInfo.RemoveDiscordOldRoleReaction(discordRaidInfoKey, reaction.UserId, userMessage, targetRole);
             Presenters.RaidInfo.AddOrChangePlayerRole(discordRaidInfoKey, reaction.UserId, targetRole);
             await Presenters.RaidInfo.RefreshDiscordRaidMessage(discordRaidInfoKey, userMessage);
-            await NotionBotClient.Ins.UpdatePage(raidInfo);
+            var notionCalendarPageId = Presenters.RaidInfo.GetNotionCalendarPageId(discordRaidInfoKey);
+            var notionCalendarPageProperies = Presenters.RaidInfo.GetNotionCalendarPageProperies(discordRaidInfoKey);
+            await NotionBotClient.Ins.UpdatePage(notionCalendarPageId, notionCalendarPageProperies);
         }
 
         private async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> message,
@@ -114,7 +116,6 @@ namespace DiscordLostArkBot.Discord
         {
             if (reaction.User.Value.IsBot) return;
             if (RaidEmoji.IsRaidRoleEmote(reaction.Emote) == false) return;
-            Console.WriteLine($"OnReactionRemoved({reaction.Emote.Name})");
 
             var userMessage = await message.GetUserMessageAsync();
             var targetRole = RaidEmoji.EmojiStringToRole(reaction.Emote.Name);
@@ -122,10 +123,10 @@ namespace DiscordLostArkBot.Discord
             var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, reaction.MessageId);
             Presenters.RaidInfo.RemovePlayerRole(discordRaidInfoKey, reaction.UserId, targetRole);
             await Presenters.RaidInfo.RefreshDiscordRaidMessage(discordRaidInfoKey, userMessage);
-            await NotionBotClient.Ins.UpdatePage(raidInfo);
+            var notionCalendarPageId = Presenters.RaidInfo.GetNotionCalendarPageId(discordRaidInfoKey);
+            var notionCalendarPageProperies = Presenters.RaidInfo.GetNotionCalendarPageProperies(discordRaidInfoKey);
+            await NotionBotClient.Ins.UpdatePage(notionCalendarPageId, notionCalendarPageProperies);
         }
-
-        
 
         private Task OnClientLogReceived(LogMessage msg)
         {

@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using DiscordLostArkBot.Constants;
 using DiscordLostArkBot.Model.RaidInfo;
+using DiscordLostArkBot.Presenter;
 using DiscordLostArkBot.Utilities;
 using Notion.Client;
 
@@ -23,26 +25,31 @@ namespace DiscordLostArkBot.Notion
             _calendarDbParent.DatabaseId = Settings.NotionCalendarDbId;
         }
 
-        public async Task CreatePage(RaidInfo raidInfo)
+        public async Task CreatePage(RaidInfo.DiscordKey discordKey, Dictionary<string, PropertyValue> pageProperties)
         {
-            var pageProperties = raidInfo.GetNotionPageProperties();
             var pageCreateParams = new PagesCreateParameters();
             pageCreateParams.Parent = _calendarDbParent;
             pageCreateParams.Properties = pageProperties;
             var createdPage = await _client.Pages.CreateAsync(pageCreateParams);
-            raidInfo.NotionCalenderPageId = createdPage.Id;
-            Console.WriteLine("CreateAsync Notion!");
+            var saved = Presenters.RaidInfo.SetNotionCalendarPageId(discordKey, createdPage.Id);
+            if (saved)
+            {
+                Console.WriteLine("CreateAsync Notion!");
+            }
+            else
+            {
+                Console.WriteLine("Save notion calander page key failed! Maybe raid info data lost or calendar key is invalid?");
+            }
         }
 
-        public async Task UpdatePage(RaidInfo raidInfo)
+        public async Task UpdatePage(string notionCalendarPageId, Dictionary<string, PropertyValue> pageProperties)
         {
-            var pageProperties = raidInfo.GetNotionPageProperties();
-            await _client.Pages.UpdatePropertiesAsync(raidInfo.NotionCalenderPageId, pageProperties);
+            await _client.Pages.UpdatePropertiesAsync(notionCalendarPageId, pageProperties);
         }
 
-        public async Task DeletePage(RaidInfo raidInfo)
+        public async Task DeletePage(string notionCalendarPageId)
         {
-            await _client.Blocks.DeleteAsync(raidInfo.NotionCalenderPageId);
+            await _client.Blocks.DeleteAsync(notionCalendarPageId);
         }
     }
 }

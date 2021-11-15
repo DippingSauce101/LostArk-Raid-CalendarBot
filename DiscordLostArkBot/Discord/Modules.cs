@@ -46,7 +46,7 @@ namespace DiscordLostArkBot.Discord
 
             raidInfo.DiscordMessageKey = new RaidInfo.DiscordKey(messageSent.Channel.Id, messageSent.Id);
             Presenters.RaidInfo.Add(raidInfo);
-            await NotionBotClient.Ins.CreatePage(raidInfo);
+            await NotionBotClient.Ins.CreatePage(raidInfo.DiscordMessageKey, raidInfo.GetNotionPageProperties());
         }
         
         /// <summary>
@@ -70,7 +70,7 @@ namespace DiscordLostArkBot.Discord
 
             raidInfo.DiscordMessageKey = new RaidInfo.DiscordKey(messageSent.Channel.Id, messageSent.Id);
             Presenters.RaidInfo.Add(raidInfo);
-            await NotionBotClient.Ins.CreatePage(raidInfo);
+            await NotionBotClient.Ins.CreatePage(raidInfo.DiscordMessageKey, raidInfo.GetNotionPageProperties());
         }
     }
 }
