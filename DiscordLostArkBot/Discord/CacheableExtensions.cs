@@ -18,7 +18,7 @@ namespace DiscordLostArkBot.Discord
 
             return userMessage;
         }
-        
+
         public static async Task<IMessage> GetMessageAsync(this Cacheable<IMessage, ulong> cacheableMessage)
         {
             IMessage message;

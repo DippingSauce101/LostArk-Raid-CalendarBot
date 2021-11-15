@@ -1,26 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord;
 using DiscordLostArkBot.Constants;
 using DiscordLostArkBot.Model;
 using DiscordLostArkBot.Model.RaidInfo;
-using DiscordLostArkBot.Utilities;
 using Notion.Client;
 
-namespace DiscordLostArkBot.Presenter
+namespace DiscordLostArkBot.Service
 {
     /// <summary>
-    /// RaidInfo를 조작하는 모든 로직은 이 클래스를 통해야 한다!
+    ///     RaidInfo를 조작하는 모든 로직은 이 클래스를 통해야 한다!
     /// </summary>
-    public class RaidInfoPresenter
+    public class RaidInfoService
     {
-        private RaidInfoCollection _raidInfoCollection;
-        public RaidInfoPresenter(RaidInfoCollection raidInfoCollection)
+        private readonly RaidInfoCollection _raidInfoCollection;
+
+        public RaidInfoService(RaidInfoCollection raidInfoCollection)
         {
             _raidInfoCollection = raidInfoCollection;
         }
-        
+
         public void Add(RaidInfo raidInfo)
         {
             _raidInfoCollection.Add(raidInfo);
@@ -52,7 +51,8 @@ namespace DiscordLostArkBot.Presenter
             return true;
         }
 
-        public async Task RemoveDiscordOldRoleReaction(RaidInfo.DiscordKey discordKey, ulong userId, IUserMessage userMessage, RaidInfo.RaidPlayer.Role newRole)
+        public async Task RemoveDiscordOldRoleReaction(RaidInfo.DiscordKey discordKey, ulong userId,
+            IUserMessage userMessage, RaidInfo.RaidPlayer.Role newRole)
         {
             if (UserAlreadySeated(discordKey, userId))
             {
@@ -75,7 +75,7 @@ namespace DiscordLostArkBot.Presenter
             if (raidInfo == null) return false;
             return raidInfo.UserAlreadySeated(userId);
         }
-        
+
         public async Task RefreshDiscordRaidMessage(RaidInfo.DiscordKey discordKey, IUserMessage userMessage)
         {
             var raidInfo = FindRaidInfo(discordKey);
@@ -102,7 +102,7 @@ namespace DiscordLostArkBot.Presenter
             raidInfo.NotionCalenderPageId = notionCalendarPageId;
             return true;
         }
-        
+
         public bool AddOrChangePlayerRole(RaidInfo.DiscordKey discordKey, ulong userId, RaidInfo.RaidPlayer.Role role)
         {
             var raidInfo = FindRaidInfo(discordKey);
@@ -120,10 +120,10 @@ namespace DiscordLostArkBot.Presenter
         {
             var raidInfo = FindRaidInfo(discordKey);
             if (raidInfo == null) return false;
-            
+
             var raidPlayers = raidInfo.RaidPlayers;
 
-            bool removed = false;
+            var removed = false;
             for (var i = 0; i < raidPlayers.Length; i++)
                 if (raidPlayers[i].UserId == userId &&
                     raidPlayers[i].UserRole == role)
@@ -139,7 +139,7 @@ namespace DiscordLostArkBot.Presenter
         {
             return _raidInfoCollection.FindRaidInfo(discordChannelId, discordMessageId);
         }
-        
+
         private RaidInfo FindRaidInfo(RaidInfo.DiscordKey discordKey)
         {
             return _raidInfoCollection.FindRaidInfo(discordKey.ChannelId, discordKey.MessageId);

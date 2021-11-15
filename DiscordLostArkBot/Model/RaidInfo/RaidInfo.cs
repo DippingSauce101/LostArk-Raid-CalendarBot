@@ -11,23 +11,12 @@ namespace DiscordLostArkBot.Model.RaidInfo
 {
     public abstract class RaidInfo
     {
-        public struct DiscordKey
-        {
-            public ulong ChannelId;
-            public ulong MessageId;
-
-            public DiscordKey(ulong channelId, ulong messageId)
-            {
-                this.ChannelId = channelId;
-                this.MessageId = messageId;
-            }
-        }
-        public DiscordKey DiscordMessageKey;
         public DateTime DateTime;
+        public DiscordKey DiscordMessageKey;
         public string NotionCalenderPageId;
         public RaidPlayer[] RaidPlayers;
         public string Title;
-        
+
         public EmbedBuilder GetEmbedBuilder()
         {
             var eb = new EmbedBuilder();
@@ -46,21 +35,22 @@ namespace DiscordLostArkBot.Model.RaidInfo
 
             eb.Description = description;
 
-            eb.AddField("딜러", GetFilledRoleCount(RaidInfo.RaidPlayer.Role.Deal) + "/" + GetRoleSeatCount(RaidInfo.RaidPlayer.Role.Deal),
+            eb.AddField("딜러", GetFilledRoleCount(RaidPlayer.Role.Deal) + "/" + GetRoleSeatCount(RaidPlayer.Role.Deal),
                 true);
             eb.AddField("서포터",
-                GetFilledRoleCount(RaidInfo.RaidPlayer.Role.Support) + "/" + GetRoleSeatCount(RaidInfo.RaidPlayer.Role.Support), true);
+                GetFilledRoleCount(RaidPlayer.Role.Support) + "/" + GetRoleSeatCount(RaidPlayer.Role.Support), true);
             return eb;
         }
-        
+
         public string GetDiscordRaidPlayerString(int index)
         {
             var player = RaidPlayers[index];
             if (player.IsEmpty())
-                return $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}{index + 1}번{RaidEmoji.RoleToKrString(player.UserRole)}";
+                return
+                    $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}{index + 1}번{RaidEmoji.RoleToKrString(player.UserRole)}";
             return $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}<@{player.UserId}>";
         }
-        
+
         public string GetNotionRaidPlayerListString()
         {
             var str = string.Empty;
@@ -73,15 +63,16 @@ namespace DiscordLostArkBot.Model.RaidInfo
 
             return str;
         }
-        
+
         public string GetNotionRaidPlayerString(int index)
         {
             var player = RaidPlayers[index];
             if (player.IsEmpty())
-                return $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}{index + 1}번{RaidEmoji.RoleToKrString(player.UserRole)}";
+                return
+                    $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}{index + 1}번{RaidEmoji.RoleToKrString(player.UserRole)}";
             return $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}{player.UserName}";
         }
-        
+
         public Dictionary<string, PropertyValue> GetNotionPageProperties()
         {
             var propertyValues = new Dictionary<string, PropertyValue>();
@@ -140,7 +131,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
             });
             return propertyValues;
         }
-        
+
         public bool UserAlreadySeated(ulong userId)
         {
             var player = RaidPlayers.Where(player => { return player.UserId == userId; }).FirstOrDefault();
@@ -207,6 +198,18 @@ namespace DiscordLostArkBot.Model.RaidInfo
                            player.UserId != RaidPlayer.UserEmpty;
                 })
                 .Count();
+        }
+
+        public struct DiscordKey
+        {
+            public ulong ChannelId;
+            public ulong MessageId;
+
+            public DiscordKey(ulong channelId, ulong messageId)
+            {
+                ChannelId = channelId;
+                MessageId = messageId;
+            }
         }
 
         public class RaidPlayer

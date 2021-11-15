@@ -3,10 +3,9 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using DiscordLostArkBot.Constants;
-using DiscordLostArkBot.Model;
 using DiscordLostArkBot.Model.RaidInfo;
 using DiscordLostArkBot.Notion;
-using DiscordLostArkBot.Presenter;
+using DiscordLostArkBot.Service;
 
 namespace DiscordLostArkBot.Discord
 {
@@ -45,10 +44,10 @@ namespace DiscordLostArkBot.Discord
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
 
             raidInfo.DiscordMessageKey = new RaidInfo.DiscordKey(messageSent.Channel.Id, messageSent.Id);
-            Presenters.RaidInfo.Add(raidInfo);
+            ServiceHolder.RaidInfo.Add(raidInfo);
             await NotionBotClient.Ins.CreatePage(raidInfo.DiscordMessageKey, raidInfo.GetNotionPageProperties());
         }
-        
+
         /// <summary>
         ///     !8인 "비아키스 하드" "21-11-13 12:00"
         /// </summary>
@@ -58,7 +57,7 @@ namespace DiscordLostArkBot.Discord
         {
             var kst = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
             var kstTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(raidCommandParam.Time), kst);
-            
+
             var raidInfo = new EightRaidInfo();
             raidInfo.Title = raidCommandParam.Title;
             raidInfo.DateTime = kstTime;
@@ -69,7 +68,7 @@ namespace DiscordLostArkBot.Discord
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
 
             raidInfo.DiscordMessageKey = new RaidInfo.DiscordKey(messageSent.Channel.Id, messageSent.Id);
-            Presenters.RaidInfo.Add(raidInfo);
+            ServiceHolder.RaidInfo.Add(raidInfo);
             await NotionBotClient.Ins.CreatePage(raidInfo.DiscordMessageKey, raidInfo.GetNotionPageProperties());
         }
     }

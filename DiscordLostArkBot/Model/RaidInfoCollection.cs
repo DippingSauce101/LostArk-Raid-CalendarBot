@@ -21,11 +21,14 @@ namespace DiscordLostArkBot.Model
             if (raidInfo == null) return;
             _raidInfos.Remove(raidInfo);
         }
-        
+
         public RaidInfo.RaidInfo FindRaidInfo(ulong discordChannelId, ulong discordMessageId)
         {
-            return _raidInfos.Where(info => { return info.DiscordMessageKey.ChannelId == discordChannelId && 
-                                                     info.DiscordMessageKey.MessageId == discordMessageId; })
+            return _raidInfos.Where(info =>
+                {
+                    return info.DiscordMessageKey.ChannelId == discordChannelId &&
+                           info.DiscordMessageKey.MessageId == discordMessageId;
+                })
                 .FirstOrDefault();
         }
     }

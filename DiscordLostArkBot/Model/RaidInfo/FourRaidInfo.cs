@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace DiscordLostArkBot.Model.RaidInfo
+﻿namespace DiscordLostArkBot.Model.RaidInfo
 {
     public class FourRaidInfo : RaidInfo
     {
