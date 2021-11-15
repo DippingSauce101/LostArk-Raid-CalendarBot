@@ -130,19 +130,34 @@ namespace DiscordLostArkBot.Data
             return $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}{player.UserName}";
         }
 
-
-        public static RaidPlayer.Role EmojiStringToRole(string emojiStr)
+        public bool AddOrChangePlayerRole(ulong userId, RaidPlayer.Role role)
         {
-            if (emojiStr.Equals(RaidEmoji.EmojiShield))
-                return RaidPlayer.Role.Support;
-            if (emojiStr.Equals(RaidEmoji.EmojiSwordCrossed))
-                return RaidPlayer.Role.Deal;
-            throw new NotImplementedException();
+            var emptySeatIndex = GetEmptySeatIndex(role);
+            if (emptySeatIndex == -1) return false;
+
+            RaidPlayers[emptySeatIndex].UserId = userId;
+            RaidPlayers[emptySeatIndex].UserRole = role;
+            return true;
         }
 
-        public abstract bool AddOrChangePlayerRole(ulong userId, RaidPlayer.Role role);
-        public abstract bool RemovePlayerRole(ulong userId, RaidPlayer.Role role);
-        public abstract bool IsRoleFull(RaidPlayer.Role role);
+        public bool RemovePlayerRole(ulong userId, RaidPlayer.Role role)
+        {
+            for (var i = 0; i < RaidPlayers.Length; i++)
+                if (RaidPlayers[i].UserId == userId &&
+                    RaidPlayers[i].UserRole == role)
+                    RaidPlayers[i].UserId = RaidPlayer.UserEmpty;
+
+            return false;
+        }
+
+        public bool IsRoleFull(RaidPlayer.Role role)
+        {
+            var emptyRolesCount = RaidPlayers.Where(raidPlayer =>
+            {
+                return raidPlayer.UserRole == role && raidPlayer.IsEmpty();
+            }).Count();
+            return emptyRolesCount == 0;
+        }
 
         public bool UserAlreadySeated(ulong userId)
         {
@@ -157,7 +172,15 @@ namespace DiscordLostArkBot.Data
             return player.UserRole;
         }
 
-        public abstract int GetEmptySeatIndex(RaidPlayer.Role role);
+        public int GetEmptySeatIndex(RaidPlayer.Role role)
+        {
+            for (var i = 0; i < RaidPlayers.Length; i++)
+                if (RaidPlayers[i].UserRole == role &&
+                    RaidPlayers[i].IsEmpty())
+                    return i;
+
+            return -1;
+        }
 
         public int GetRoleSeatCount(RaidPlayer.Role role)
         {
