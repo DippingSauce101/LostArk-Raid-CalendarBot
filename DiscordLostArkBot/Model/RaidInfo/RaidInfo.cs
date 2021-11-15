@@ -145,26 +145,6 @@ namespace DiscordLostArkBot.Model.RaidInfo
             return player.UserRole;
         }
 
-        // public bool AddOrChangePlayerRole(ulong userId, RaidPlayer.Role role)
-        // {
-        //     var emptySeatIndex = GetEmptySeatIndex(role);
-        //     if (emptySeatIndex == -1) return false;
-        //
-        //     RaidPlayers[emptySeatIndex].UserId = userId;
-        //     RaidPlayers[emptySeatIndex].UserRole = role;
-        //     return true;
-        // }
-        //
-        // public bool RemovePlayerRole(ulong userId, RaidPlayer.Role role)
-        // {
-        //     for (var i = 0; i < RaidPlayers.Length; i++)
-        //         if (RaidPlayers[i].UserId == userId &&
-        //             RaidPlayers[i].UserRole == role)
-        //             RaidPlayers[i].UserId = RaidPlayer.UserEmpty;
-        //
-        //     return false;
-        // }
-
         public bool IsRoleFull(RaidPlayer.Role role)
         {
             var emptyRolesCount = RaidPlayers.Where(raidPlayer =>
