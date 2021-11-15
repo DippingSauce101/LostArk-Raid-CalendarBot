@@ -99,7 +99,7 @@ namespace DiscordLostArkBot.Discord
                 return;
             }
 
-            var targetRole = RaidInfo.EmojiStringToRole(reaction.Emote.Name);
+            var targetRole = RaidEmoji.EmojiStringToRole(reaction.Emote.Name);
             if (raidInfo.IsRoleFull(targetRole)) return;
             var userMessage = await message.GetUserMessageAsync();
             if (raidInfo.UserAlreadySeated(reaction.UserId))
@@ -136,7 +136,7 @@ namespace DiscordLostArkBot.Discord
             }
 
             var userMessage = await message.GetUserMessageAsync();
-            var targetRole = RaidInfo.EmojiStringToRole(reaction.Emote.Name);
+            var targetRole = RaidEmoji.EmojiStringToRole(reaction.Emote.Name);
             raidInfo.RemovePlayerRole(reaction.UserId, targetRole);
             await RefreshRaidMessage(raidInfo, userMessage);
             await NotionBotClient.Ins.UpdatePage(raidInfo);

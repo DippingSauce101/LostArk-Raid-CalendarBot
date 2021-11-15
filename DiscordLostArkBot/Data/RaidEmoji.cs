@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System;
+using Discord;
 
 namespace DiscordLostArkBot.Data
 {
@@ -21,6 +22,15 @@ namespace DiscordLostArkBot.Data
         {
             return emote.Name.Equals(EmojiShield) ||
                    emote.Name.Equals(EmojiSwordCrossed);
+        }
+        
+        public static RaidInfo.RaidPlayer.Role EmojiStringToRole(string emojiStr)
+        {
+            if (emojiStr.Equals(RaidEmoji.EmojiShield))
+                return RaidInfo.RaidPlayer.Role.Support;
+            if (emojiStr.Equals(RaidEmoji.EmojiSwordCrossed))
+                return RaidInfo.RaidPlayer.Role.Deal;
+            throw new NotImplementedException();
         }
     }
 }
