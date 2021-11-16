@@ -25,9 +25,9 @@ namespace DiscordLostArkBot.Discord
     public class RaidSchedulerModule : ModuleBase<SocketCommandContext>
     {
         /// <summary>
-        ///     !4인 "쿠크세이튼 노말" "21-11-13 12:00"
+        ///     !4인일정 Title:"쿠크세이튼 노말" Time:"21-11-13 12:00"
         /// </summary>
-        [Command("4인")]
+        [Command("4인일정")]
         [Summary("4인 레이드 일정 제작")]
         public async Task FourRaid(RaidCommandParameter raidCommandParam)
         {
@@ -52,9 +52,9 @@ namespace DiscordLostArkBot.Discord
         }
 
         /// <summary>
-        ///     !8인 "비아키스 하드" "21-11-13 12:00"
+        ///     !8인일정 Title:"비아키스 하드" Time:"21-11-13 12:00"
         /// </summary>
-        [Command("8인")]
+        [Command("8인일정")]
         [Summary("8인 레이드 일정 제작")]
         public async Task EightRaid(RaidCommandParameter raidCommandParam)
         {
