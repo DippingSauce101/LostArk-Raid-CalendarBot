@@ -1,22 +1,83 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Discord;
 using DiscordLostArkBot.Constants;
 using DiscordLostArkBot.Discord;
+using Newtonsoft.Json;
 using Notion.Client;
 using Color = Discord.Color;
 
 namespace DiscordLostArkBot.Model.RaidInfo
 {
-    public abstract class RaidInfo
+    [JsonObject(MemberSerialization.OptIn)]
+    public class RaidInfo
     {
-        public DateTime DateTime;
-        public DiscordKey DiscordMessageKey;
-        public string NotionCalenderPageId;
-        public RaidPlayer[] RaidPlayers;
-        public string Title;
+        /// <summary>
+        /// 8인 레이드 역할분담
+        /// </summary>
+        public static readonly RaidPlayer.Role[] EIGHT_RAID_ROLES =
+        {
+            RaidPlayer.Role.Deal,
+            RaidPlayer.Role.Deal,
+            RaidPlayer.Role.Deal,
+            RaidPlayer.Role.Deal,
+            RaidPlayer.Role.Deal,
+            RaidPlayer.Role.Deal,
+            RaidPlayer.Role.Support,
+            RaidPlayer.Role.Support
+        };
+        
+        /// <summary>
+        /// 4인 레이드 역할분담
+        /// </summary>
+        public static readonly RaidPlayer.Role[] FOUR_RAID_ROLES =
+        {
+            RaidPlayer.Role.Deal,
+            RaidPlayer.Role.Deal,
+            RaidPlayer.Role.Deal,
+            RaidPlayer.Role.Support
+        };
+        
+        [JsonProperty] public DateTime DateTime;
+        [JsonProperty] public DiscordKey DiscordMessageKey;
+        [JsonProperty] public string NotionCalenderPageId;
+        [JsonProperty] public RaidPlayer[] RaidPlayers;
+        [JsonProperty] public string Title;
+        [JsonProperty] public ulong LeaderDiscordUserId;
 
+        /// <summary>
+        /// Json Serializer의 경우 Paramless Constructer를 필요로 한다.
+        /// 따라서 Create 함수를 쓰고, private로 생성을 막아두자.
+        /// </summary>
+        private RaidInfo()
+        {
+            
+        }
+
+        public static RaidInfo Create(int playerCount, params RaidPlayer.Role[] roles)
+        {
+            RaidInfo info = new RaidInfo();
+            if (playerCount != roles.Length)
+            {
+                throw new InvalidDataException("레이드 유저 숫자의 역할 데이터와 유저 수 데이터가 일치하지 않습니다!");
+            }
+            
+            info.RaidPlayers = new RaidPlayer[playerCount];
+            for (var i = 0; i < playerCount; i++)
+                info.RaidPlayers[i] = new RaidPlayer
+                {
+                    UserRole = roles[i]
+                };
+            return info;
+        }
+
+        public string GetDiscordTitleMessage()
+        {
+            return $"{RaidPlayers.Length}인 레이드 / 공대장: {LeaderDiscordUserId.DiscordUserIdToRefString()}";
+        }
+        
         public EmbedBuilder GetEmbedBuilder()
         {
             var eb = new EmbedBuilder();
@@ -48,7 +109,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
             if (player.IsEmpty())
                 return
                     $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}{index + 1}번{RaidEmoji.RoleToKrString(player.UserRole)}";
-            return $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}<@{player.UserId}>";
+            return $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}{player.UserId.DiscordUserIdToRefString()}";
         }
 
         public string GetNotionRaidPlayerListString()
@@ -180,10 +241,11 @@ namespace DiscordLostArkBot.Model.RaidInfo
                 .Count();
         }
 
+        [JsonObject(MemberSerialization.OptIn)]
         public struct DiscordKey
         {
-            public ulong ChannelId;
-            public ulong MessageId;
+            [JsonProperty] public ulong ChannelId;
+            [JsonProperty] public ulong MessageId;
 
             public DiscordKey(ulong channelId, ulong messageId)
             {
@@ -192,6 +254,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
             }
         }
 
+        [JsonObject(MemberSerialization.OptIn)]
         public class RaidPlayer
         {
             public enum Role
@@ -201,8 +264,9 @@ namespace DiscordLostArkBot.Model.RaidInfo
             }
 
             public const ulong UserEmpty = 0;
-            public ulong UserId = 0;
-            public Role UserRole;
+            
+            [JsonProperty] public ulong UserId = 0;
+            [JsonProperty] public Role UserRole;
 
             public string UserName => DiscordBotClient.Ins.Client.GetUser(UserId).Username;
 

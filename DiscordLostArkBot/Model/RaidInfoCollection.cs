@@ -1,14 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace DiscordLostArkBot.Model
 {
+    
+    [JsonObject(MemberSerialization.OptIn)]
     public class RaidInfoCollection
     {
         /// <summary>
         ///     최적화 위해서 추후 Dictionary로 수정하면 되겠지만 귀찮으니 일단 리스트로 구현
         /// </summary>
-        private readonly List<RaidInfo.RaidInfo> _raidInfos = new();
+        [JsonProperty] private List<RaidInfo.RaidInfo> _raidInfos = new();
 
         public void Add(RaidInfo.RaidInfo raidInfo)
         {
@@ -30,6 +33,16 @@ namespace DiscordLostArkBot.Model
                            info.DiscordMessageKey.MessageId == discordMessageId;
                 })
                 .FirstOrDefault();
+        }
+
+        public RaidInfo.RaidInfo ElementAt(int idx)
+        {
+            return _raidInfos.ElementAt(idx);
+        }
+
+        public int GetCount()
+        {
+            return _raidInfos.Count;
         }
     }
 }

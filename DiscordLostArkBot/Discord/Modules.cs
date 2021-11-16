@@ -34,12 +34,15 @@ namespace DiscordLostArkBot.Discord
             var kst = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
             var kstTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(raidCommandParam.Time), kst);
 
-            var raidInfo = new FourRaidInfo();
+            var raidInfo = RaidInfo.Create(4, RaidInfo.FOUR_RAID_ROLES);
             raidInfo.Title = raidCommandParam.Title;
             raidInfo.DateTime = kstTime;
+            //공대장은 이 메세지를 보낸 유저로 자동 셋팅
+            raidInfo.LeaderDiscordUserId = Context.User.Id;
 
+            var titleMessage = raidInfo.GetDiscordTitleMessage();
             var eb = raidInfo.GetEmbedBuilder();
-            var messageSent = await Context.Channel.SendMessageAsync("", false, eb.Build());
+            var messageSent = await Context.Channel.SendMessageAsync(titleMessage, false, eb.Build());
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiSwordCrossed));
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
 
@@ -58,12 +61,15 @@ namespace DiscordLostArkBot.Discord
             var kst = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
             var kstTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(raidCommandParam.Time), kst);
 
-            var raidInfo = new EightRaidInfo();
+            var raidInfo = RaidInfo.Create(8, RaidInfo.EIGHT_RAID_ROLES);
             raidInfo.Title = raidCommandParam.Title;
             raidInfo.DateTime = kstTime;
+            //공대장은 이 메세지를 보낸 유저로 자동 셋팅
+            raidInfo.LeaderDiscordUserId = Context.User.Id;
 
+            var titleMessage = raidInfo.GetDiscordTitleMessage();
             var eb = raidInfo.GetEmbedBuilder();
-            var messageSent = await Context.Channel.SendMessageAsync("", false, eb.Build());
+            var messageSent = await Context.Channel.SendMessageAsync(titleMessage, false, eb.Build());
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiSwordCrossed));
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
 

@@ -12,13 +12,12 @@ namespace DiscordLostArkBot
         /// <param name="args"></param>
         private static void Main(string[] args)
         {
-            //Ins 호출하여 초기화
-            DB.Init();
             new Program().ProgramMain().GetAwaiter().GetResult();
         }
 
         public async Task ProgramMain()
         {
+            DB.Init();
             var discordBot = DiscordBotClient.Ins;
             await discordBot.RunClient();
         }
