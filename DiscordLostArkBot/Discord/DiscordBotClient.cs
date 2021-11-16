@@ -50,14 +50,7 @@ namespace DiscordLostArkBot.Discord
         private async Task OnClientMessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
         {
             var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, message.Id);
-            if (ServiceHolder.RaidInfo.Exists(discordRaidInfoKey))
-            {
-                Console.WriteLine($"Raid info not found for deleted message: {message.Id}");
-                return;
-            }
-
-            var notionCalendarPageId = ServiceHolder.RaidInfo.GetNotionCalendarPageId(discordRaidInfoKey);
-            await NotionBotClient.Ins.DeletePage(notionCalendarPageId);
+            await ServiceHolder.RaidInfo.OnRaidMessageDeleted(discordRaidInfoKey);
         }
 
         private async Task OnClientMessage(SocketMessage messageParam)

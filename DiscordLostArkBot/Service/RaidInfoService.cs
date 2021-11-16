@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord;
 using DiscordLostArkBot.Constants;
@@ -24,11 +25,13 @@ namespace DiscordLostArkBot.Service
         public void Add(RaidInfo raidInfo)
         {
             _raidInfoCollection.Add(raidInfo);
+            DB.Ins.Save();
         }
 
         public void Remove(RaidInfo raidInfo)
         {
             _raidInfoCollection.Remove(raidInfo);
+            DB.Ins.Save();
         }
 
         public bool Exists(RaidInfo.DiscordKey discordKey)
@@ -89,6 +92,16 @@ namespace DiscordLostArkBot.Service
             }
 
             return removed;
+        }
+
+        public async Task OnRaidMessageDeleted(RaidInfo.DiscordKey discordKey)
+        {
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) return;
+            
+            var notionCalendarPageId = GetNotionCalendarPageId(discordKey);
+            Remove(raidInfo);
+            await NotionBotClient.Ins.DeletePage(notionCalendarPageId);
         }
         
         #region Notion Logics
