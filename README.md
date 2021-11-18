@@ -44,5 +44,8 @@
     - https://www.notion.so/[내_아이디]/[캘린더_ID]?v=[캘린더_뷰_ID]
     - 여기서 중간의 [캘린더_ID]를 복사해 [Settings.cs](https://github.com/DippingSauce101/LostArk-Raid-CalendarBot/blob/81c917716e2f3bce482d6b1d40ef84e110b12103/DiscordLostArkBot/Constants/Settings.cs#L7) 파일의 NotionCalendarDbId에 복붙하시면 끝.
 
+## Known Issue
 
-
+- 노션 API를 통해 일정을 추가할 경우, 강제로 UTC Time만이 입력되는 문제가 있습니다.
+- 캘린더 상에서는 제대로 표시되지만 클릭해서 열어보면 UTC Time이 출력되는데 정상적인 값이므로 놀라지 마세요.(한국 시간 -9시간)
+  - ![image](https://user-images.githubusercontent.com/94309745/142362241-225d9e8b-fc40-4aaf-8ef2-5c4fbbbe6cfb.png)
