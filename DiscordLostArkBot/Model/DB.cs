@@ -149,7 +149,7 @@ namespace DiscordLostArkBot.Model
         
         static string GetSaveDirectoryPath()
         {
-            var subDir = $"{AppContext.BaseDirectory} + /RaidInfoDatas/";
+            var subDir = $"{AppContext.BaseDirectory}/RaidInfoDatas/";
             return subDir;
         }
         
