@@ -36,7 +36,7 @@ namespace DiscordLostArkBot.Discord
 
             var raidInfo = RaidInfo.Create(4, RaidInfo.FOUR_RAID_ROLES);
             raidInfo.Title = raidCommandParam.Title;
-            raidInfo.DateTime = kstTime;
+            raidInfo.RaidDateTime = kstTime;
             //공대장은 이 메세지를 보낸 유저로 자동 셋팅
             raidInfo.LeaderDiscordUserId = Context.User.Id;
 
@@ -63,7 +63,7 @@ namespace DiscordLostArkBot.Discord
 
             var raidInfo = RaidInfo.Create(8, RaidInfo.EIGHT_RAID_ROLES);
             raidInfo.Title = raidCommandParam.Title;
-            raidInfo.DateTime = kstTime;
+            raidInfo.RaidDateTime = kstTime;
             //공대장은 이 메세지를 보낸 유저로 자동 셋팅
             raidInfo.LeaderDiscordUserId = Context.User.Id;
 

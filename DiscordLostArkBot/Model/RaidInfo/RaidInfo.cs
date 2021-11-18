@@ -5,6 +5,7 @@ using System.Linq;
 using Discord;
 using DiscordLostArkBot.Constants;
 using DiscordLostArkBot.Discord;
+using DiscordLostArkBot.Utilities;
 using Newtonsoft.Json;
 using Notion.Client;
 using Color = Discord.Color;
@@ -40,12 +41,22 @@ namespace DiscordLostArkBot.Model.RaidInfo
             RaidPlayer.Role.Support
         };
         
-        [JsonProperty] public DateTime DateTime;
+        [JsonProperty] public DateTime RaidDateTime;
         [JsonProperty] public DiscordKey DiscordMessageKey;
         [JsonProperty] public string NotionCalenderPageId;
         [JsonProperty] public RaidPlayer[] RaidPlayers;
         [JsonProperty] public string Title;
         [JsonProperty] public ulong LeaderDiscordUserId;
+
+        /// <summary>
+        /// Extension 없이, Discord Key와 Raid DateTime을 키값으로 한 파일명 생성
+        /// </summary>
+        /// <returns></returns>
+        public string GetRaidFileName()
+        {
+            return
+                $"{RaidDateTime.ToUtcMillis()}_{DiscordMessageKey.ChannelId}_{DiscordMessageKey.MessageId}";
+        }
 
         /// <summary>
         /// Json Serializer의 경우 Paramless Constructer를 필요로 한다.
@@ -186,8 +197,8 @@ namespace DiscordLostArkBot.Model.RaidInfo
             {
                 Date = new Date
                 {
-                    Start = DateTime,
-                    End = DateTime.AddHours(1)
+                    Start = RaidDateTime,
+                    End = RaidDateTime.AddHours(1)
                 }
             });
             return propertyValues;
@@ -200,10 +211,17 @@ namespace DiscordLostArkBot.Model.RaidInfo
             return true;
         }
 
+        public bool UserAlreadySeatedWithRole(ulong userId, RaidPlayer.Role role)
+        {
+            return GetUserRole(userId) == role;
+        }
+
         public RaidPlayer.Role GetUserRole(ulong userId)
         {
             var player = RaidPlayers.Where(player => { return player.UserId == userId; }).FirstOrDefault();
-            return player.UserRole;
+            if (player != null) return player.UserRole;
+            
+            return RaidPlayer.Role.Error;
         }
 
         public bool IsRoleFull(RaidPlayer.Role role)
@@ -259,6 +277,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
         {
             public enum Role
             {
+                Error,
                 Deal,
                 Support
             }

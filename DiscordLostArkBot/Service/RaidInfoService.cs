@@ -25,13 +25,13 @@ namespace DiscordLostArkBot.Service
         public void Add(RaidInfo raidInfo)
         {
             _raidInfoCollection.Add(raidInfo);
-            DB.Ins.Save();
+            DB.Ins.SaveToFile(raidInfo);
         }
 
         public void Remove(RaidInfo raidInfo)
         {
             _raidInfoCollection.Remove(raidInfo);
-            DB.Ins.Save();
+            DB.Ins.Delete(raidInfo);
         }
 
         public bool Exists(RaidInfo.DiscordKey discordKey)
@@ -66,7 +66,7 @@ namespace DiscordLostArkBot.Service
             raidInfo.RaidPlayers[emptySeatIndex].UserId = userId;
             raidInfo.RaidPlayers[emptySeatIndex].UserRole = role;
 
-            DB.Ins.Save();
+            DB.Ins.SaveToFile(raidInfo);
             return true;
         }
 
@@ -87,8 +87,8 @@ namespace DiscordLostArkBot.Service
                 }
 
             if (removed)
-            {
-                DB.Ins.Save();
+            {            
+                DB.Ins.SaveToFile(raidInfo);
             }
 
             return removed;
@@ -126,7 +126,7 @@ namespace DiscordLostArkBot.Service
             if (raidInfo == null) return false;
 
             raidInfo.NotionCalenderPageId = notionCalendarPageId;
-            DB.Ins.Save();
+            DB.Ins.SaveToFile(raidInfo);
             return true;
         }
         

@@ -44,7 +44,6 @@ namespace DiscordLostArkBot.Discord
             Client.ReactionRemoved += OnReactionRemoved;
 
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), null);
-            await Task.Delay(-1);
         }
 
         private async Task OnClientMessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)

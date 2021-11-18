@@ -20,6 +20,7 @@ namespace DiscordLostArkBot
             DB.Init();
             var discordBot = DiscordBotClient.Ins;
             await discordBot.RunClient();
+            await Task.Delay(-1);
         }
     }
 }
