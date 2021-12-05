@@ -40,7 +40,8 @@ namespace DiscordLostArkBot.Model.RaidInfo
             RaidPlayer.Role.Deal,
             RaidPlayer.Role.Support
         };
-        
+
+        [JsonProperty] public ulong DataID;
         [JsonProperty] public DateTime RaidDateTime;
         [JsonProperty] public DiscordKey DiscordMessageKey;
         [JsonProperty] public string NotionCalenderPageId;
@@ -55,7 +56,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
         public string GetRaidFileName()
         {
             return
-                $"{RaidDateTime.ToUtcMillis()}_{DiscordMessageKey.ChannelId}_{DiscordMessageKey.MessageId}";
+                $"{DataID}";
         }
 
         /// <summary>
@@ -67,7 +68,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
             
         }
 
-        public static RaidInfo Create(int playerCount, params RaidPlayer.Role[] roles)
+        public static RaidInfo Create(int playerCount, ulong dataId, params RaidPlayer.Role[] roles)
         {
             RaidInfo info = new RaidInfo();
             if (playerCount != roles.Length)
@@ -81,6 +82,9 @@ namespace DiscordLostArkBot.Model.RaidInfo
                 {
                     UserRole = roles[i]
                 };
+
+            info.DataID = dataId;
+
             return info;
         }
 
@@ -111,6 +115,9 @@ namespace DiscordLostArkBot.Model.RaidInfo
                 true);
             eb.AddField("서포터",
                 GetFilledRoleCount(RaidPlayer.Role.Support) + "/" + GetRoleSeatCount(RaidPlayer.Role.Support), true);
+            eb.AddField("코드", DataID.ToString());
+            eb.Timestamp = RaidDateTime;
+            
             return eb;
         }
 
