@@ -6,8 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Discord.Addons.Interactive" Version="2.0.0" />
-        <PackageReference Include="Discord.Net" Version="2.4.0" />
+        <PackageReference Include="Discord.Net.Labs" Version="3.4.8" />
         <PackageReference Include="Notion.Net" Version="2.2.1-preview-1.11.1.2021" />
     </ItemGroup>
 

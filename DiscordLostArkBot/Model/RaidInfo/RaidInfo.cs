@@ -43,6 +43,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
         
         [JsonProperty] public DateTime RaidDateTime;
         [JsonProperty] public DiscordKey DiscordMessageKey;
+        [JsonProperty] public ulong DiscordMessageThreadId;
         [JsonProperty] public string NotionCalenderPageId;
         [JsonProperty] public RaidPlayer[] RaidPlayers;
         [JsonProperty] public string Title;

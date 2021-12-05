@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.Rest;
 using DiscordLostArkBot.Constants;
 using DiscordLostArkBot.Model.RaidInfo;
 using DiscordLostArkBot.Notion;
@@ -46,6 +47,9 @@ namespace DiscordLostArkBot.Discord
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiSwordCrossed));
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
 
+            //메세지 스레드 생성
+            await CreateThread(raidInfo, messageSent);
+
             raidInfo.DiscordMessageKey = new RaidInfo.DiscordKey(messageSent.Channel.Id, messageSent.Id);
             ServiceHolder.RaidInfo.Add(raidInfo);
             await NotionBotClient.Ins.CreatePage(raidInfo.DiscordMessageKey, raidInfo.GetNotionPageProperties());
@@ -72,10 +76,33 @@ namespace DiscordLostArkBot.Discord
             var messageSent = await Context.Channel.SendMessageAsync(titleMessage, false, eb.Build());
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiSwordCrossed));
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
+            
+            //메세지 스레드 생성
+            await CreateThread(raidInfo, messageSent);
 
             raidInfo.DiscordMessageKey = new RaidInfo.DiscordKey(messageSent.Channel.Id, messageSent.Id);
             ServiceHolder.RaidInfo.Add(raidInfo);
             await NotionBotClient.Ins.CreatePage(raidInfo.DiscordMessageKey, raidInfo.GetNotionPageProperties());
+        }
+
+        private async Task CreateThread(RaidInfo raidInfo, RestUserMessage messageSent)
+        {
+            if (messageSent.Channel is ITextChannel)
+            {
+                var textChannel = (messageSent.Channel as ITextChannel);
+                try
+                {
+                    var messageThread = await textChannel.CreateThreadAsync(raidInfo.Title, ThreadType.PublicThread,
+                        ThreadArchiveDuration.OneDay,
+                        messageSent);
+                    raidInfo.DiscordMessageThreadId = messageThread.Id;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
+                
+            }
         }
     }
 }
