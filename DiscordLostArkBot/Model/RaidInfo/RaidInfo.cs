@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using Discord;
@@ -112,7 +113,15 @@ namespace DiscordLostArkBot.Model.RaidInfo
                 true);
             eb.AddField("서포터",
                 GetFilledRoleCount(RaidPlayer.Role.Support) + "/" + GetRoleSeatCount(RaidPlayer.Role.Support), true);
+
             return eb;
+        }
+
+        public ComponentBuilder GetComponentBuilder()
+        {
+            var cb = new ComponentBuilder()
+                .WithButton("일정확인", style: ButtonStyle.Link, url: Settings.NotionCalendarUrl);
+            return cb;
         }
 
         public string GetDiscordRaidPlayerString(int index)

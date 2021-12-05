@@ -43,7 +43,8 @@ namespace DiscordLostArkBot.Discord
 
             var titleMessage = raidInfo.GetDiscordTitleMessage();
             var eb = raidInfo.GetEmbedBuilder();
-            var messageSent = await Context.Channel.SendMessageAsync(titleMessage, false, eb.Build());
+            var cb = raidInfo.GetComponentBuilder();
+            var messageSent = await Context.Channel.SendMessageAsync(titleMessage, false, eb.Build(), component:cb.Build());
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiSwordCrossed));
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
 
@@ -73,7 +74,8 @@ namespace DiscordLostArkBot.Discord
 
             var titleMessage = raidInfo.GetDiscordTitleMessage();
             var eb = raidInfo.GetEmbedBuilder();
-            var messageSent = await Context.Channel.SendMessageAsync(titleMessage, false, eb.Build());
+            var cb = raidInfo.GetComponentBuilder();
+            var messageSent = await Context.Channel.SendMessageAsync(titleMessage, false, eb.Build(), component:cb.Build());
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiSwordCrossed));
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
             
