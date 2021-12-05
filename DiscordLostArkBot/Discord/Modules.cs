@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.Rest;
 using DiscordLostArkBot.Constants;
 using DiscordLostArkBot.Model.RaidInfo;
 using DiscordLostArkBot.Notion;
@@ -24,90 +25,15 @@ namespace DiscordLostArkBot.Discord
 
     public class RaidSchedulerModule : ModuleBase<SocketCommandContext>
     {
-        bool IsDigitsOnly(string str)
-        {
-            foreach (char c in str)
-            {
-                if (c < '0' || c > '9' || c == ' ')
-                {
-                    return false;
-                }                   
-            }
-            
-            return true;
-        }
-
-        //[Command("4인")]
-        //[Summary("4인 레이드 일정 단순화")]
-        //public async Task FourRaidSimple(string raidCommandParam)
-        //{
-        //    string timeStamp_discord = "";
-        //    var textArr = raidCommandParam.Split('/');
-        //    var textArrLength = textArr.Length;
-        //    if (textArrLength > 0)
-        //    {
-        //        if (IsDigitsOnly(textArr[textArrLength - 1]))
-        //        {
-        //            timeStamp_discord = textArr[textArrLength - 1];
-        //        }
-        //    }
-
-        //    //!4인 쿠크노말 4시 /2021 11 25
-
-        //    var kst = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
-        //    var kstTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(raidCommandParam.Time), kst);
-
-        //    var raidInfo = RaidInfo.Create(4, RaidInfo.FOUR_RAID_ROLES);
-        //    raidInfo.Title = raidCommandParam.Title;
-        //    raidInfo.RaidDateTime = kstTime;
-        //    //공대장은 이 메세지를 보낸 유저로 자동 셋팅
-        //    raidInfo.LeaderDiscordUserId = Context.User.Id;
-
-        //    var titleMessage = raidInfo.GetDiscordTitleMessage();
-        //    var eb = raidInfo.GetEmbedBuilder();
-
-        //    var messageSent = await Context.Channel.SendMessageAsync(titleMessage, false, eb.Build());
-        //    await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiSwordCrossed));
-        //    await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
-
-        //    Context.Message.dele
-
-        //    raidInfo.DiscordMessageKey = new RaidInfo.DiscordKey(messageSent.Channel.Id, messageSent.Id);
-        //    ServiceHolder.RaidInfo.Add(raidInfo);
-        //    await NotionBotClient.Ins.CreatePage(raidInfo.DiscordMessageKey, raidInfo.GetNotionPageProperties());
-        //}
-
-
         /// <summary>
-        ///     !4인일정 Title:"쿠크세이튼 노말" Time:"21-11-13 12:00"
+        /// !4인 제목:"쿠크세이튼 노말" 시간:"21/10/13"
+        /// !4인 제목:"쿠크세이튼 노말" 시간:"21/10/13 13:00"
         /// </summary>
         [Command("4인")]
         [Summary("4인 레이드 일정 제작")]
         public async Task FourRaid(RaidCommandParameter raidCommandParam)
         {
-            var kst = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
-            var kstTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(raidCommandParam.시간), kst);
-
-            var raidInfo = RaidInfo.Create(4, Context.Message.Id, RaidInfo.FOUR_RAID_ROLES);
-            raidInfo.Title = raidCommandParam.제목;
-            raidInfo.RaidDateTime = kstTime;
-            //공대장은 이 메세지를 보낸 유저로 자동 셋팅
-            raidInfo.LeaderDiscordUserId = Context.User.Id;
-
-            await Context.Message.DeleteAsync();
-
-            var titleMessage = raidInfo.GetDiscordTitleMessage();
-            var eb = raidInfo.GetEmbedBuilder();
-
-            var messageSent = await Context.Channel.SendMessageAsync(titleMessage, false, eb.Build());
-                        
-
-            await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiSwordCrossed));
-            await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
-            raidInfo.DiscordMessageKey = new RaidInfo.DiscordKey(messageSent.Channel.Id, messageSent.Id);
-
-            ServiceHolder.RaidInfo.Add(raidInfo);
-            await NotionBotClient.Ins.CreatePage(raidInfo.DiscordMessageKey, raidInfo.GetNotionPageProperties());
+            await AddRaid(raidCommandParam, RaidInfo.FOUR_RAID_ROLES);
         }
 
         /// <summary>
@@ -117,24 +43,57 @@ namespace DiscordLostArkBot.Discord
         [Summary("8인 레이드 일정 제작")]
         public async Task EightRaid(RaidCommandParameter raidCommandParam)
         {
+            await AddRaid(raidCommandParam, RaidInfo.EIGHT_RAID_ROLES);
+        }
+
+        public async Task AddRaid(RaidCommandParameter raidCommandParam, RaidInfo.RaidPlayer.Role[] roles)
+        {
             var kst = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
             var kstTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(raidCommandParam.시간), kst);
 
-            var raidInfo = RaidInfo.Create(4, Context.Message.Id, RaidInfo.EIGHT_RAID_ROLES);
+            var raidInfo = RaidInfo.Create(roles.Length, Context.Message.Id, roles);
             raidInfo.Title = raidCommandParam.제목;
             raidInfo.RaidDateTime = kstTime;
+
             //공대장은 이 메세지를 보낸 유저로 자동 셋팅
             raidInfo.LeaderDiscordUserId = Context.User.Id;
 
+            //명령어 메세지 삭제
+            await Context.Message.DeleteAsync();
+
             var titleMessage = raidInfo.GetDiscordTitleMessage();
             var eb = raidInfo.GetEmbedBuilder();
-            var messageSent = await Context.Channel.SendMessageAsync(titleMessage, false, eb.Build());
+            var cb = raidInfo.GetComponentBuilder();
+            var messageSent = await Context.Channel.SendMessageAsync(titleMessage, false, eb.Build(), component: cb.Build());
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiSwordCrossed));
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
+
+            //메세지 스레드 생성
+            await CreateThread(raidInfo, messageSent);
 
             raidInfo.DiscordMessageKey = new RaidInfo.DiscordKey(messageSent.Channel.Id, messageSent.Id);
             ServiceHolder.RaidInfo.Add(raidInfo);
             await NotionBotClient.Ins.CreatePage(raidInfo.DiscordMessageKey, raidInfo.GetNotionPageProperties());
+        }
+
+        private async Task CreateThread(RaidInfo raidInfo, RestUserMessage messageSent)
+        {
+            if (messageSent.Channel is ITextChannel)
+            {
+                var textChannel = (messageSent.Channel as ITextChannel);
+                try
+                {
+                    var messageThread = await textChannel.CreateThreadAsync(raidInfo.Title, ThreadType.PublicThread,
+                        ThreadArchiveDuration.OneDay,
+                        messageSent);
+                    raidInfo.DiscordMessageThreadId = messageThread.Id;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
+                
+            }
         }
     }
 }

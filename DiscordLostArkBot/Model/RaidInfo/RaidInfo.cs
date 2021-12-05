@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using Discord;
@@ -44,6 +45,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
         [JsonProperty] public ulong DataID;
         [JsonProperty] public DateTime RaidDateTime;
         [JsonProperty] public DiscordKey DiscordMessageKey;
+        [JsonProperty] public ulong DiscordMessageThreadId;
         [JsonProperty] public string NotionCalenderPageId;
         [JsonProperty] public RaidPlayer[] RaidPlayers;
         [JsonProperty] public string Title;
@@ -55,8 +57,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
         /// <returns></returns>
         public string GetRaidFileName()
         {
-            return
-                $"{DataID}";
+            return $"{DataID}";
         }
 
         /// <summary>
@@ -115,10 +116,18 @@ namespace DiscordLostArkBot.Model.RaidInfo
                 true);
             eb.AddField("서포터",
                 GetFilledRoleCount(RaidPlayer.Role.Support) + "/" + GetRoleSeatCount(RaidPlayer.Role.Support), true);
+
             eb.AddField("코드", DataID.ToString());
             eb.Timestamp = RaidDateTime;
-            
+
             return eb;
+        }
+
+        public ComponentBuilder GetComponentBuilder()
+        {
+            var cb = new ComponentBuilder()
+                .WithButton("일정확인", style: ButtonStyle.Link, url: Settings.NotionCalendarUrl);
+            return cb;
         }
 
         public string GetDiscordRaidPlayerString(int index)

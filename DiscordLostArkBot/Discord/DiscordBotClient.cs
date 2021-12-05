@@ -42,12 +42,19 @@ namespace DiscordLostArkBot.Discord
             Client.MessageDeleted += OnClientMessageDeleted;
             Client.ReactionAdded += OnReactionAdded;
             Client.ReactionRemoved += OnReactionRemoved;
+            //Client.MessageUpdated += test;
 
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), null);
         }
 
-        private async Task OnClientMessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
+        private async Task OnClientMessageDeleted(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> cacheable)
         {
+            var channel = await cacheable.GetOrDownloadAsync();
+            if (channel == null)
+            {
+                Console.WriteLine("OnClientMessageDeleted : Retrieving channel failed!!!");
+                return;
+            }
             var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, message.Id);
             await ServiceHolder.RaidInfo.OnRaidMessageDeleted(discordRaidInfoKey);
         }
@@ -79,11 +86,17 @@ namespace DiscordLostArkBot.Discord
         }
 
         private async Task OnReactionAdded(Cacheable<IUserMessage, ulong> message,
-            ISocketMessageChannel channel,
+            Cacheable<IMessageChannel, ulong> cacheable,
             SocketReaction reaction)
         {
             if (reaction.User.Value.IsBot) return;
             if (RaidEmoji.IsRaidRoleEmote(reaction.Emote) == false) return;
+            var channel = await cacheable.GetOrDownloadAsync();
+            if (channel == null)
+            {
+                Console.WriteLine("OnReactionAdded : Retrieving channel failed!!!");
+                return;
+            }
 
             var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, reaction.MessageId);
             var targetRole = RaidEmoji.EmojiStringToRole(reaction.Emote.Name);
@@ -100,12 +113,18 @@ namespace DiscordLostArkBot.Discord
         }
 
         private async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> message,
-            ISocketMessageChannel channel,
+            Cacheable<IMessageChannel, ulong> cacheable,
             SocketReaction reaction)
         {
             if (reaction.User.Value.IsBot) return;
             if (RaidEmoji.IsRaidRoleEmote(reaction.Emote) == false) return;
-
+            var channel = await cacheable.GetOrDownloadAsync();
+            if (channel == null)
+            {
+                Console.WriteLine("OnReactionAdded : Retrieving channel failed!!!");
+                return;
+            }
+            
             var userMessage = await message.GetUserMessageAsync();
             var targetRole = RaidEmoji.EmojiStringToRole(reaction.Emote.Name);
 
