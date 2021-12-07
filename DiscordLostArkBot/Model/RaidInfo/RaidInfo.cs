@@ -117,7 +117,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
             eb.AddField("서포터",
                 GetFilledRoleCount(RaidPlayer.Role.Support) + "/" + GetRoleSeatCount(RaidPlayer.Role.Support), true);
 
-            eb.AddField("코드", DataID.ToString());
+            eb.AddField("수정 코드", DataID.ToString(), false);
             eb.Timestamp = RaidDateTime;
 
             return eb;

@@ -67,6 +67,7 @@ namespace DiscordLostArkBot.Discord
             var messageSent = await Context.Channel.SendMessageAsync(titleMessage, false, eb.Build(), component: cb.Build());
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiSwordCrossed));
             await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiShield));
+            await messageSent.AddReactionAsync(new Emoji(RaidEmoji.EmojiCross));
 
             //메세지 스레드 생성
             await CreateThread(raidInfo, messageSent);
