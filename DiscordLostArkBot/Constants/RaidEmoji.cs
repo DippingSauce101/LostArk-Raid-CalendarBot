@@ -8,6 +8,12 @@ namespace DiscordLostArkBot.Constants
     {
         public const string EmojiSwordCrossed = "⚔️";
         public const string EmojiShield = "🛡️";
+        public const string EmojiCross = "❌";
+
+        public static bool IsCrossEmote(IEmote emote)
+        {
+            return emote.Name.Equals(EmojiCross);
+        }
 
         public static bool IsRaidRoleEmote(IEmote emote)
         {

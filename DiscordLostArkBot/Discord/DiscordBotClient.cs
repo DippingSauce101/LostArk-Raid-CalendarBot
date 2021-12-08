@@ -42,6 +42,7 @@ namespace DiscordLostArkBot.Discord
             Client.MessageDeleted += OnClientMessageDeleted;
             Client.ReactionAdded += OnReactionAdded;
             Client.ReactionRemoved += OnReactionRemoved;
+            //Client.MessageUpdated += test;
 
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), null);
         }
@@ -89,26 +90,46 @@ namespace DiscordLostArkBot.Discord
             SocketReaction reaction)
         {
             if (reaction.User.Value.IsBot) return;
-            if (RaidEmoji.IsRaidRoleEmote(reaction.Emote) == false) return;
-            var channel = await cacheable.GetOrDownloadAsync();
-            if (channel == null)
+            if (RaidEmoji.IsCrossEmote(reaction.Emote))
             {
-                Console.WriteLine("OnReactionAdded : Retrieving channel failed!!!");
-                return;
+                var channel = await cacheable.GetOrDownloadAsync();
+                if (channel == null)
+                {
+                    Console.WriteLine("OnClientMessageDeleted : Retrieving channel failed!!!");
+                    return;
+                }
+                var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, message.Id);
+                await ServiceHolder.RaidInfo.OnRaidMessageDeleted(discordRaidInfoKey);
+
+                var downloadedMessage = await message.DownloadAsync();
+
+                //Console.WriteLine(message.Id + "/" + downloadedMessage.Id);
+
+                await downloadedMessage.DeleteAsync();
             }
 
-            var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, reaction.MessageId);
-            var targetRole = RaidEmoji.EmojiStringToRole(reaction.Emote.Name);
-            if (ServiceHolder.RaidInfo.CanAddPlayer(discordRaidInfoKey, targetRole) == false) return;
+            if (RaidEmoji.IsRaidRoleEmote(reaction.Emote))
+            {
+                var channel = await cacheable.GetOrDownloadAsync();
+                if (channel == null)
+                {
+                    Console.WriteLine("OnReactionAdded : Retrieving channel failed!!!");
+                    return;
+                }
 
-            var userMessage = await message.GetUserMessageAsync();
-            await ServiceHolder.RaidInfo.RemoveDiscordOldRoleReaction(discordRaidInfoKey, reaction.UserId, userMessage,
-                targetRole);
-            ServiceHolder.RaidInfo.AddOrChangePlayerRole(discordRaidInfoKey, reaction.UserId, targetRole);
-            await ServiceHolder.RaidInfo.RefreshDiscordRaidMessage(discordRaidInfoKey, userMessage);
-            var notionCalendarPageId = ServiceHolder.RaidInfo.GetNotionCalendarPageId(discordRaidInfoKey);
-            var notionCalendarPageProperies = ServiceHolder.RaidInfo.GetNotionCalendarPageProperies(discordRaidInfoKey);
-            await NotionBotClient.Ins.UpdatePage(notionCalendarPageId, notionCalendarPageProperies);
+                var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, reaction.MessageId);
+                var targetRole = RaidEmoji.EmojiStringToRole(reaction.Emote.Name);
+                if (ServiceHolder.RaidInfo.CanAddPlayer(discordRaidInfoKey, targetRole) == false) return;
+
+                var userMessage = await message.GetUserMessageAsync();
+                await ServiceHolder.RaidInfo.RemoveDiscordOldRoleReaction(discordRaidInfoKey, reaction.UserId, userMessage,
+                    targetRole);
+                ServiceHolder.RaidInfo.AddOrChangePlayerRole(discordRaidInfoKey, reaction.UserId, targetRole);
+                await ServiceHolder.RaidInfo.RefreshDiscordRaidMessage(discordRaidInfoKey, userMessage);
+                var notionCalendarPageId = ServiceHolder.RaidInfo.GetNotionCalendarPageId(discordRaidInfoKey);
+                var notionCalendarPageProperies = ServiceHolder.RaidInfo.GetNotionCalendarPageProperies(discordRaidInfoKey);
+                await NotionBotClient.Ins.UpdatePage(notionCalendarPageId, notionCalendarPageProperies);
+            }            
         }
 
         private async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> message,
