@@ -51,6 +51,8 @@ namespace DiscordLostArkBot.Discord
             var kst = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
             var kstTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(raidCommandParam.시간), kst);
 
+            //참고 - 메세지 Id는 디스코드 앱 전체에서 유니크함이 (거의)보장됨.
+            //https://discord.com/developers/docs/reference#snowflakes 
             var raidInfo = RaidInfo.Create(roles.Length, Context.Message.Id, roles);
             raidInfo.Title = raidCommandParam.제목;
             raidInfo.RaidDateTime = kstTime;

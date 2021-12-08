@@ -94,6 +94,13 @@ namespace DiscordLostArkBot.Service
             return removed;
         }
 
+        public bool IsUserLeader(RaidInfo.DiscordKey discordKey, ulong userId)
+        {
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) return false;
+            return raidInfo.LeaderDiscordUserId == userId;
+        }
+
         public async Task OnRaidMessageDeleted(RaidInfo.DiscordKey discordKey)
         {
             var raidInfo = FindRaidInfo(discordKey);

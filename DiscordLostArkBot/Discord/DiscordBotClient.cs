@@ -95,17 +95,22 @@ namespace DiscordLostArkBot.Discord
                 var channel = await cacheable.GetOrDownloadAsync();
                 if (channel == null)
                 {
-                    Console.WriteLine("OnClientMessageDeleted : Retrieving channel failed!!!");
+                    Console.WriteLine("OnReactionAdded : Retrieving channel failed!!!");
                     return;
                 }
+                //Cross Emote 누른 유저가 공대장일 경우에만 메세지 삭제!
                 var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, message.Id);
-                await ServiceHolder.RaidInfo.OnRaidMessageDeleted(discordRaidInfoKey);
+                if (ServiceHolder.RaidInfo.IsUserLeader(discordRaidInfoKey, reaction.UserId))
+                {
+                    await ServiceHolder.RaidInfo.OnRaidMessageDeleted(discordRaidInfoKey);
+                    await channel.DeleteMessageAsync(message.Id);
+                }
+                else
+                {
+                    Console.WriteLine($"OnReactionAdded : User {reaction.UserId} is not a leader!");
+                }
 
-                var downloadedMessage = await message.DownloadAsync();
-
-                //Console.WriteLine(message.Id + "/" + downloadedMessage.Id);
-
-                await downloadedMessage.DeleteAsync();
+                return;
             }
 
             if (RaidEmoji.IsRaidRoleEmote(reaction.Emote))
