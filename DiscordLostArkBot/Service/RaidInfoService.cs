@@ -40,6 +40,27 @@ namespace DiscordLostArkBot.Service
             return FindRaidInfo(discordKey.ChannelId, discordKey.MessageId) != null;
         }
 
+        public bool Exists(ulong dataId)
+        {
+            return FindRaidInfo(dataId) != null;
+        }
+        
+        public RaidInfo.DiscordKey DiscordKeyFromDataId(ulong dataId)
+        {
+            var raidInfo = FindRaidInfo(dataId);
+            if (raidInfo == null) throw new NullReferenceException($"RaidInfo with dataId {dataId} NOT exists!");
+            return raidInfo.DiscordMessageKey;
+        }
+
+        public bool ModifyRaidTime(ulong dataId, DateTime utcDateTime)
+        {
+            var raidInfo = FindRaidInfo(dataId);
+            if (raidInfo == null) return false;
+            raidInfo.RaidDateTimeUtc = utcDateTime;
+            DB.Ins.SaveToFile(raidInfo);
+            return true;
+        }
+
         public bool CanAddPlayer(RaidInfo.DiscordKey discordKey, RaidInfo.RaidPlayer.Role requestedRole)
         {
             var raidInfo = FindRaidInfo(discordKey);
@@ -118,6 +139,20 @@ namespace DiscordLostArkBot.Service
             if (raidInfo == null) return 0;
             else return raidInfo.DiscordMessageThreadId;
         }
+
+        public string GetRaidTitle(RaidInfo.DiscordKey discordKey)
+        {
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) return null;
+            else return raidInfo.Title;
+        }
+        
+        public DateTime GetRaidTime(RaidInfo.DiscordKey discordKey)
+        {
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) throw new NullReferenceException("Data not found!");
+            else return raidInfo.RaidDateTimeUtc;
+        }
         
         #region Notion Logics
 
@@ -177,8 +212,20 @@ namespace DiscordLostArkBot.Service
                 x.Embed = eb.Build();
             });
         }
+
+        public async Task RefreshNotionRaidPage(RaidInfo.DiscordKey discordKey)
+        {
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) return;
+            await NotionBotClient.Ins.UpdatePage(raidInfo.NotionCalenderPageId, raidInfo.GetNotionPageProperties());
+        }
         
         #endregion
+
+        private RaidInfo FindRaidInfo(ulong dataId)
+        {
+            return _raidInfoCollection.FindRaidInfo(dataId);
+        }
 
         private RaidInfo FindRaidInfo(ulong discordChannelId, ulong discordMessageId)
         {

@@ -34,6 +34,15 @@ namespace DiscordLostArkBot.Model
                 })
                 .FirstOrDefault();
         }
+        
+        public RaidInfo.RaidInfo FindRaidInfo(ulong dataId)
+        {
+            return _raidInfos.Where(info =>
+                {
+                    return info.DataId == dataId;
+                })
+                .FirstOrDefault();
+        }
 
         public RaidInfo.RaidInfo ElementAt(int idx)
         {

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Globalization;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
@@ -15,6 +17,8 @@ namespace DiscordLostArkBot.Discord
 {
     public class RaidSchedulerModule : ModuleBase<SocketCommandContext>
     {
+        #region Raid Command Pameter Logics
+        
         /// <summary>
         /// 디스코드 스트링을 직접 파싱한다.
         /// </summary>
@@ -32,25 +36,59 @@ namespace DiscordLostArkBot.Discord
 
         private bool ParseRaidCommandParam(string paramStr, out RaidCommandParam raidCommandParam)
         {
+            var parseSuccessed = ParseParenthesisedDateTimeFromString(paramStr, out var parsedDateTime);
+            var title = ParseTitleWithoutDateTime(paramStr);
+            raidCommandParam = new RaidCommandParam(title, parsedDateTime);
+            return parseSuccessed;
+        }
+        
+        /// <summary>
+        /// 중괄호 안에 DateTime 형식의 스트링이 있다면 RegEx로 찾아내서 파싱해 <b>UTC</b> DateTime 리턴.
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="parseResult"></param>
+        /// <returns></returns>
+        private bool ParseParenthesisedDateTimeFromString(string str, out DateTime parseResult)
+        {
             Regex parenRegEx = new Regex(@"\(([^)]*)\)");
             DateTime parsedDateTime = DateTime.Now.AddHours(1);
             bool parseSuccessed = false;
-            string title = paramStr;
-            foreach (Match match in parenRegEx.Matches(paramStr))
+            
+            foreach (Match match in parenRegEx.Matches(str))
             {
                 var dateTimeStr = match.Value.Substring(1, match.Value.Length - 2);
                 if (ParseToDateTime(dateTimeStr, out parsedDateTime))
                 {
-                    title = title.Replace(match.Value, "");
                     parseSuccessed = true;
                     break;
                 }
             }
 
-            parsedDateTime = parsedDateTime.KstToUtc();
-            raidCommandParam = new RaidCommandParam(title, parsedDateTime);
+            parseResult = parsedDateTime.KstToUtc();
             return parseSuccessed;
         }
+
+        /// <summary>
+        /// 중괄호 안에 DateTime 형식의 스트링이 있다면 제거하고 리턴.
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
+        private string ParseTitleWithoutDateTime(string str)
+        {
+            Regex parenRegEx = new Regex(@"\(([^)]*)\)");
+            string title = str;
+            foreach (Match match in parenRegEx.Matches(str))
+            {
+                var dateTimeStr = match.Value.Substring(1, match.Value.Length - 2);
+                if (ParseToDateTime(dateTimeStr, out var parsedDateTime))
+                {
+                    title = title.Replace(match.Value, "");
+                    break;
+                }
+            }
+            return title;
+        }
+
 
         private bool ParseToDateTime(string str, out DateTime parsedDateTime)
         {
@@ -64,6 +102,18 @@ namespace DiscordLostArkBot.Discord
                 parsedDateTime = DateTime.Now.AddHours(1);
                 return false;
             }
+        }
+        
+        #endregion
+        
+        [Command("도움")]
+        [Summary("도움말")]
+        public async Task Help()
+        {
+            string helpText =  $"실행 가능한 명령어 리스트 및 예시들이에요.\n" +
+                               $"!4인 쿠크세이튼 노말 트라이팟 ({DateTime.Now.AddHours(1).ToString(@"yy\/MM\/dd HH:mm")})\n" +
+                               $"!8인 비아하드 트라이(1500이하만) ({DateTime.Now.AddHours(1).ToString(@"yy\/MM\/dd HH:mm")})\n";
+            await Context.Channel.SendMessageAsync(helpText);
         }
 
         /// <summary>
@@ -87,14 +137,92 @@ namespace DiscordLostArkBot.Discord
             await AddRaid(paramStr, RaidInfo.EightRaidRoles);
         }
 
-        [Command("도움")]
-        [Summary("도움말")]
-        public async Task Help()
+        private struct ModifyRaidCommandParam
         {
-            string helpText =  $"실행 가능한 명령어 리스트 및 예시들이에요.\n" +
-                $"!4인 쿠크세이튼 노말 트라이팟 ({DateTime.Now.AddHours(1).ToString(@"yy\/MM\/dd HH:mm")})\n" +
-                $"!8인 비아하드 트라이(1500이하만) ({DateTime.Now.AddHours(1).ToString(@"yy\/MM\/dd HH:mm")})\n";
-            await Context.Channel.SendMessageAsync(helpText);
+            public ulong RaidDataId;
+            public DateTime NewDateTime;
+
+            public ModifyRaidCommandParam(ulong raidDataId, DateTime newDateTime)
+            {
+                RaidDataId = raidDataId;
+                NewDateTime = newDateTime;
+            }
+        }
+        
+        private bool ParseModifyRaidCommandParam(string paramStr, out ModifyRaidCommandParam modifyRaidCommandParam)
+        {
+            var raidDataIdParsed = ParseRaidDataId(paramStr, out var parsedRaidDataId);
+            var dateTimeParsed = ParseParenthesisedDateTimeFromString(paramStr, out var parsedDateTime);
+            modifyRaidCommandParam = new ModifyRaidCommandParam(parsedRaidDataId, parsedDateTime);
+            return raidDataIdParsed && dateTimeParsed;
+        }
+
+        private bool ParseRaidDataId(string paramStr, out ulong parsedRaidDataId)
+        {
+            var firstParam = paramStr.Split(' ').First();
+            if (string.IsNullOrWhiteSpace(firstParam))
+            {
+                parsedRaidDataId = 0;
+                return false;
+            }
+            if (ulong.TryParse(firstParam, out parsedRaidDataId))
+            {
+                return true;
+            }
+
+            return false;
+        }
+        
+        /// <summary>
+        ///     !수정 918065709668515881 (21/12/20 22:00)
+        /// </summary>
+        [Command("수정")]
+        [Summary("기존 레이드 정보 수정")]
+        public async Task ModifyRaid([Remainder] string paramStr)
+        {
+            var parseSuccessed = ParseModifyRaidCommandParam(paramStr, out var modifyRaidCommandParam);
+            if (!parseSuccessed)
+            {
+                await Context.Channel.SendMessageAsync("잘못된 입력값이 들어왔어요! 다음과 같은 형식으로 입력하셔야 해요.(중괄호도 포함해서!)\n" +
+                    $"!수정 {modifyRaidCommandParam.RaidDataId} ({DateTime.Now.AddHours(1).ToString(@"yy\/MM\/dd HH:mm")})");
+                return;
+            }
+
+            if (ServiceHolder.RaidInfo.Exists(modifyRaidCommandParam.RaidDataId) == false)
+            {
+                await Context.Channel.SendMessageAsync($"수정 코드 {modifyRaidCommandParam.RaidDataId} 값을 가진 데이터를 찾지 못했어요. " +
+                                                       $"값을 확인해 보시고, 관리자에게 연락하시거나 새로 파셔야 할 거 같아요!");
+                return;
+            }
+
+            var modded = ServiceHolder.RaidInfo.ModifyRaidTime(modifyRaidCommandParam.RaidDataId,
+                modifyRaidCommandParam.NewDateTime);
+            if (!modded)
+            {
+                await Context.Channel.SendMessageAsync($"수정 코드 {modifyRaidCommandParam.RaidDataId} 값을 가진 데이터의 수정에 실패했어요! " +
+                                                       $"관리자에게 문의하시는 게 좋을 것 같아요...");
+                return;
+            }
+
+            var discordRaidInfoKey = ServiceHolder.RaidInfo.DiscordKeyFromDataId(modifyRaidCommandParam.RaidDataId);
+            var targetMessage = await 
+                DiscordBotClient.Ins.FindUserMessage(discordRaidInfoKey.ChannelId, discordRaidInfoKey.MessageId);
+            if (targetMessage == null)
+            {
+                await Context.Channel.SendMessageAsync($"수정 코드 {modifyRaidCommandParam.RaidDataId} 값을 가진 메세지를 찾지 못했어요! " +
+                                                       $"문제가 계속되면 관리자에게 문의하시는 게 좋을 것 같아요...");
+                return;
+            }
+            
+            await ServiceHolder.RaidInfo.RefreshDiscordRaidMessage(discordRaidInfoKey, targetMessage);
+            await ServiceHolder.RaidInfo.RefreshNotionRaidPage(discordRaidInfoKey);
+            
+            CultureInfo cultures = CultureInfo.CreateSpecificCulture("ko-KR");
+            await Context.Channel.SendMessageAsync($"[{ServiceHolder.RaidInfo.GetRaidTitle(discordRaidInfoKey)}] 레이드의 시간을 " +
+                                                   $"[{ServiceHolder.RaidInfo.GetRaidTime(discordRaidInfoKey).UtcToKst().ToString("yyyy년 MM월 dd일 ddd요일 HH시 mm분", cultures)}]" +
+                                                   $"으로 수정했어요!");
+            return;
+
         }
 
         public async Task AddRaid(string paramStr, RaidInfo.RaidPlayer.Role[] roles)

@@ -47,6 +47,17 @@ namespace DiscordLostArkBot.Discord
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), null);
         }
 
+        public async Task<IUserMessage> FindUserMessage(ulong channelId, ulong messageId)
+        {
+            var channel = (await Client.GetChannelAsync(channelId)) as ITextChannel;
+            if (channel == null)
+            {
+                return null;
+            }
+            var message = (await channel.GetMessageAsync(messageId)) as IUserMessage;
+            return message;
+        }
+
         private async Task OnClientMessageDeleted(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> cacheable)
         {
             var channel = await cacheable.GetOrDownloadAsync();
