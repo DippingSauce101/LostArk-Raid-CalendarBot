@@ -6,6 +6,7 @@ using System.Linq;
 using Discord;
 using DiscordLostArkBot.Constants;
 using DiscordLostArkBot.Discord;
+using DiscordLostArkBot.Notion;
 using DiscordLostArkBot.Utilities;
 using Newtonsoft.Json;
 using Notion.Client;
@@ -19,7 +20,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
         /// <summary>
         /// 8인 레이드 역할분담
         /// </summary>
-        public static readonly RaidPlayer.Role[] EIGHT_RAID_ROLES =
+        public static readonly RaidPlayer.Role[] EightRaidRoles =
         {
             RaidPlayer.Role.Deal,
             RaidPlayer.Role.Deal,
@@ -34,7 +35,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
         /// <summary>
         /// 4인 레이드 역할분담
         /// </summary>
-        public static readonly RaidPlayer.Role[] FOUR_RAID_ROLES =
+        public static readonly RaidPlayer.Role[] FourRaidRoles =
         {
             RaidPlayer.Role.Deal,
             RaidPlayer.Role.Deal,
@@ -42,8 +43,8 @@ namespace DiscordLostArkBot.Model.RaidInfo
             RaidPlayer.Role.Support
         };
 
-        [JsonProperty] public ulong DataID;
-        [JsonProperty] public DateTime RaidDateTime;
+        [JsonProperty] public ulong DataId;
+        [JsonProperty] public DateTime RaidDateTimeUtc;
         [JsonProperty] public DiscordKey DiscordMessageKey;
         [JsonProperty] public ulong DiscordMessageThreadId;
         [JsonProperty] public string NotionCalenderPageId;
@@ -57,7 +58,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
         /// <returns></returns>
         public string GetRaidFileName()
         {
-            return $"{DataID}";
+            return $"{DataId}";
         }
 
         /// <summary>
@@ -84,7 +85,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
                     UserRole = roles[i]
                 };
 
-            info.DataID = dataId;
+            info.DataId = dataId;
 
             return info;
         }
@@ -117,8 +118,8 @@ namespace DiscordLostArkBot.Model.RaidInfo
             eb.AddField("서포터",
                 GetFilledRoleCount(RaidPlayer.Role.Support) + "/" + GetRoleSeatCount(RaidPlayer.Role.Support), true);
 
-            eb.AddField("수정 코드", DataID.ToString(), false);
-            eb.Timestamp = RaidDateTime;
+            eb.AddField("수정 코드", DataId.ToString(), false);
+            eb.Timestamp = RaidDateTimeUtc;
 
             return eb;
         }
@@ -209,12 +210,14 @@ namespace DiscordLostArkBot.Model.RaidInfo
                     }
                 }
             });
-            propertyValues.Add("날짜", new DatePropertyValue
+
+            var kstRaidDateTime = RaidDateTimeUtc.UtcToKst();
+            propertyValues.Add("날짜", new TimeZoneDatePropertyValue()
             {
-                Date = new Date
+                Date = new TimeZoneDate()
                 {
-                    Start = RaidDateTime,
-                    End = RaidDateTime.AddHours(1)
+                    Start = kstRaidDateTime.ToIso8601(),
+                    End = kstRaidDateTime.AddHours(1).ToIso8601()
                 }
             });
             return propertyValues;

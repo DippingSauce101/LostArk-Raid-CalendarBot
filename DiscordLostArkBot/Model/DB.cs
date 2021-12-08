@@ -35,7 +35,7 @@ namespace DiscordLostArkBot.Model
                 for (int i = 0; i < Ins.RaidInfoCollection.GetCount(); i++)
                 {
                     var info = Ins.RaidInfoCollection.ElementAt(i);
-                    Console.WriteLine($"\t[{i}] {String.Format("{0,-27}", info.Title)} {info.RaidDateTime.ToString("yyyy-MM-dd HH:mm")}");
+                    Console.WriteLine($"\t[{i}] {String.Format("{0,-27}", info.Title)} {info.RaidDateTimeUtc.ToString("yyyy-MM-dd HH:mm")}");
                 }
             }
             else
