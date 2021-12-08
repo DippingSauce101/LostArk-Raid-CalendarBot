@@ -30,21 +30,26 @@ namespace DiscordLostArkBot.Discord
             }
         }
 
-        private RaidCommandParam ParseRaidCommandParam(string paramStr)
+        private bool ParseRaidCommandParam(string paramStr, out RaidCommandParam raidCommandParam)
         {
             Regex parenRegEx = new Regex(@"\(([^)]*)\)");
-            DateTime parsedDateTime = DateTime.Now;
+            DateTime parsedDateTime = DateTime.Now.AddHours(1);
+            bool parseSuccessed = false;
+            string title = paramStr;
             foreach (Match match in parenRegEx.Matches(paramStr))
             {
                 var dateTimeStr = match.Value.Substring(1, match.Value.Length - 2);
                 if (ParseToDateTime(dateTimeStr, out parsedDateTime))
                 {
+                    title = title.Replace(match.Value, "");
+                    parseSuccessed = true;
                     break;
                 }
             }
 
             parsedDateTime = parsedDateTime.KstToUtc();
-            return new RaidCommandParam(paramStr, parsedDateTime);
+            raidCommandParam = new RaidCommandParam(title, parsedDateTime);
+            return parseSuccessed;
         }
 
         private bool ParseToDateTime(string str, out DateTime parsedDateTime)
@@ -56,7 +61,7 @@ namespace DiscordLostArkBot.Discord
             }
             else
             {
-                parsedDateTime = DateTime.Now;
+                parsedDateTime = DateTime.Now.AddHours(1);
                 return false;
             }
         }
@@ -82,8 +87,19 @@ namespace DiscordLostArkBot.Discord
             await AddRaid(paramStr, RaidInfo.EightRaidRoles);
         }
 
+        [Command("도움")]
+        [Summary("도움말")]
+        public async Task Help()
+        {
+            string helpText =  $"실행 가능한 명령어 리스트 및 예시들이에요.\n" +
+                $"!4인 쿠크세이튼 노말 트라이팟 ({DateTime.Now.AddHours(1).ToString(@"yy\/MM\/dd HH:mm")})\n" +
+                $"!8인 비아하드 트라이(1500이하만) ({DateTime.Now.AddHours(1).ToString(@"yy\/MM\/dd HH:mm")})\n";
+            await Context.Channel.SendMessageAsync(helpText);
+        }
+
         public async Task AddRaid(string paramStr, RaidInfo.RaidPlayer.Role[] roles)
         {
+            var userCommandMessage = Context.Message;
             //만약 스레드 채널일 경우 명령어 거절!
             if (Context.Channel is IThreadChannel)
             {
@@ -92,7 +108,12 @@ namespace DiscordLostArkBot.Discord
                 return;
             }
 
-            var parsedParam = ParseRaidCommandParam(paramStr);
+            bool parseSuccessed = ParseRaidCommandParam(paramStr, out var parsedParam);
+            if (!parseSuccessed)
+            {
+                await Context.Channel.SendMessageAsync("레이드 일정이 몇 시인지 잘 모르겠어요. 일단은 한 시간 뒤로 설정해둘게요!\n" +
+                                                       "도움말이 필요하시면 !도움 명령어를 입력하세요!");
+            }
 
             //참고 - 메세지 Id는 디스코드 앱 전체에서 유니크함이 (거의)보장됨.
             //https://discord.com/developers/docs/reference#snowflakes 
@@ -104,7 +125,7 @@ namespace DiscordLostArkBot.Discord
             raidInfo.LeaderDiscordUserId = Context.User.Id;
 
             //명령어 메세지 삭제
-            await Context.Message.DeleteAsync();
+            await userCommandMessage.DeleteAsync();
 
             var titleMessage = raidInfo.GetDiscordTitleMessage();
             var eb = raidInfo.GetEmbedBuilder();

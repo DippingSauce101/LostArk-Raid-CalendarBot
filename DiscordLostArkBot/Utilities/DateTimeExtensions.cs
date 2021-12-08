@@ -16,8 +16,7 @@ namespace DiscordLostArkBot.Utilities
 
         public static DateTime KstToUtc(this DateTime dateTime)
         {
-            var kst = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
-            dateTime = TimeZoneInfo.ConvertTimeToUtc(dateTime, kst);
+            dateTime = TimeZoneInfo.ConvertTimeToUtc(dateTime);
             DateTime utcDateTime = new DateTime(dateTime.Ticks, DateTimeKind.Utc);
             return utcDateTime;
         }
