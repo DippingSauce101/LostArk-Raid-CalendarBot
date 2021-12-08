@@ -37,7 +37,7 @@ namespace DiscordLostArkBot.Discord
         }
 
         /// <summary>
-        ///     !8인일정 Title:"비아키스 하드" Time:"21-11-13 12:00"
+        ///     !8인 제목:"비아키스 하드" 시간:"21-11-13 12:00"
         /// </summary>
         [Command("8인")]
         [Summary("8인 레이드 일정 제작")]
@@ -48,6 +48,14 @@ namespace DiscordLostArkBot.Discord
 
         public async Task AddRaid(RaidCommandParameter raidCommandParam, RaidInfo.RaidPlayer.Role[] roles)
         {
+            //만약 스레드 채널일 경우 명령어 거절!
+            if (Context.Channel is IThreadChannel)
+            {
+                await Context.Channel.SendMessageAsync("여기는 스레드 채널이에요!!! " +
+                                                       "일정 추가는 스레드 채널에서 진행할 수 없습니다!!");
+                return;
+            }
+            
             var kst = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
             var kstTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(raidCommandParam.시간), kst);
 

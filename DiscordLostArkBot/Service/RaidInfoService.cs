@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord;
 using DiscordLostArkBot.Constants;
+using DiscordLostArkBot.Discord;
 using DiscordLostArkBot.Model;
 using DiscordLostArkBot.Model.RaidInfo;
 using DiscordLostArkBot.Notion;
@@ -109,6 +110,13 @@ namespace DiscordLostArkBot.Service
             var notionCalendarPageId = GetNotionCalendarPageId(discordKey);
             Remove(raidInfo);
             await NotionBotClient.Ins.DeletePage(notionCalendarPageId);
+        }
+
+        public ulong GetDiscordThreadUid(RaidInfo.DiscordKey discordKey)
+        {
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) return 0;
+            else return raidInfo.DiscordMessageThreadId;
         }
         
         #region Notion Logics

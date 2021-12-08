@@ -104,6 +104,7 @@ namespace DiscordLostArkBot.Discord
                 {
                     await ServiceHolder.RaidInfo.OnRaidMessageDeleted(discordRaidInfoKey);
                     await channel.DeleteMessageAsync(message.Id);
+                    //스레드 삭제는 일단 보류! 구현은 가능한데 기록을 남겨둘 필요가 있을수도 있으니까?
                 }
                 else
                 {
