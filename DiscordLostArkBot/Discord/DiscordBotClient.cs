@@ -106,7 +106,13 @@ namespace DiscordLostArkBot.Discord
             Cacheable<IMessageChannel, ulong> cacheable,
             SocketReaction reaction)
         {
-            if (reaction.User.Value.IsBot) return;
+            IUser reactedUser = reaction.User.GetValueOrDefault();
+            if (reactedUser == null)
+            {
+                reactedUser = await Client.GetUserAsync(reaction.UserId);
+            }
+            if (reactedUser == null || reactedUser.IsBot) return;
+            
             if (RaidEmoji.IsCrossEmote(reaction.Emote))
             {
                 var channel = await cacheable.GetOrDownloadAsync();
@@ -165,7 +171,13 @@ namespace DiscordLostArkBot.Discord
             Cacheable<IMessageChannel, ulong> cacheable,
             SocketReaction reaction)
         {
-            if (reaction.User.Value.IsBot) return;
+            IUser reactedUser = reaction.User.GetValueOrDefault();
+            if (reactedUser == null)
+            {
+                reactedUser = await Client.GetUserAsync(reaction.UserId);
+            }
+            if (reactedUser == null || reactedUser.IsBot) return;
+            
             if (RaidEmoji.IsRaidRoleEmote(reaction.Emote) == false) return;
             var channel = await cacheable.GetOrDownloadAsync();
             if (channel == null)
