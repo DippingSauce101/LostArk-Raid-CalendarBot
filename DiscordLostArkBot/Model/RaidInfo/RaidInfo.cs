@@ -195,6 +195,21 @@ namespace DiscordLostArkBot.Model.RaidInfo
                     }
                 }
             });
+            propertyValues.Add("수정코드", new RichTextPropertyValue
+            {
+                RichText = new List<RichTextBase>
+                {
+                    new RichTextText
+                    {
+                        Type = RichTextType.Text,
+                        Text = new Text
+                        {
+                            Content = DataId.ToString()
+                        },
+                        PlainText = DataId.ToString()
+                    }
+                }
+            });
             propertyValues.Add("참가자", new RichTextPropertyValue
             {
                 RichText = new List<RichTextBase>
