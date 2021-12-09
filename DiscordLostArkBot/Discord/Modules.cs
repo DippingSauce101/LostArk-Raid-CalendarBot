@@ -21,8 +21,9 @@ namespace DiscordLostArkBot.Discord
         public async Task Help()
         {
             var helpText = "실행 가능한 명령어 리스트 및 예시들이에요.\n" +
-                           $"!4인 쿠크세이튼 노말 트라이팟 ({DateTime.Now.AddHours(1).ToString(@"yy\/MM\/dd HH:mm")})\n" +
-                           $"!8인 비아하드 트라이(1500이하만) ({DateTime.Now.AddHours(1).ToString(@"yy\/MM\/dd HH:mm")})\n";
+                           $"!4인일정 쿠크세이튼 노말 트라이팟 ({DateTime.Now.AddHours(1).ToString(@"yy\/MM\/dd HH:mm")})\n" +
+                           $"!8인일정 비아하드 트라이(1500이하만) ({DateTime.Now.AddHours(1).ToString(@"yy\/MM\/dd HH:mm")})\n" + 
+                           $"!수정 123456789123456789 ({DateTime.Now.AddHours(1).ToString(@"yy\/MM\/dd HH:mm")})\n";
             await Context.Channel.SendMessageAsync(helpText);
         }
 
