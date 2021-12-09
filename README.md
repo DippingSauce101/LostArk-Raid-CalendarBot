@@ -5,23 +5,21 @@
 
 디스코드에서 !4인일정 또는 !8인일정 명령어를 입력하면 레이드 신청 메세지를 출력하고, Notion Calendar에 해당 정보를 연동합니다.
 
-![image](https://user-images.githubusercontent.com/94309745/142360464-5bd414c8-f920-4963-bffb-d7af79438e3a.png)
+![image](https://user-images.githubusercontent.com/94309745/145355772-779a4ac1-34eb-4b68-99dd-fe8106413b34.png)
 ![image](https://user-images.githubusercontent.com/94309745/142360536-13d44600-96b6-44b9-b41a-86864b36c0c5.png)
 
 
 ## 명령어
 
-- !4인일정 Title:"[타이틀]" Time:"YY-MM-DD HH시 ss분"
+- !4인일정 레이드이름(레이드시간)
   - 4인 레이드 일정을 입력합니다.
-  - ***Title, Time 입력시 큰따옴표를 누락하시면 안됩니다!!!***
   - 예시
-    - !4인일정 Title: "쿠크세이튼 노말" Time: "21-11-21 14시 30분"
+    - !4인일정 쿠크하드(21/12/13 20:00)
 
-- !8인일정 Title:"[타이틀]" Time:"YY-MM-DD HH시 ss분"
+- !8인일정 레이드이름(레이드시간)
   - 8인 레이드 일정을 입력합니다.
-  - ***Title, Time 입력시 큰따옴표를 누락하시면 안됩니다!!!***
   - 예시
-    - !8인일정 Title: "비아키스 하드" Time: "21-11-21 18시 00분"
+    - !8인일정 비아노말(12/30 오후 4시)
 
 명령어 입력 후 봇이 보낸 메세지의 리액션 이모티콘을 눌러 참여를 신청합니다.
 
@@ -42,7 +40,7 @@
     - ![image](https://user-images.githubusercontent.com/94309745/142361641-58401995-32f8-40d5-985a-733d1db13bf3.png)
   - 노션의 API 접근자를 초대합니다.
     - ![image](https://user-images.githubusercontent.com/94309745/144707565-06f484d0-e33b-49aa-84d3-713e0490ee70.png)
-  - 노션 캘린더에 '레이드명', '참가자' 프로퍼티를 추가해야합니다.
+  - ***노션 캘린더에 '레이드명', '참가자', '날짜' 프로퍼티를 추가해야합니다.***
     - ![image](https://user-images.githubusercontent.com/94309745/144707652-4453c68d-e268-46ee-8ad3-3213cea8d287.png)
   - 노션의 캘린더를 열어보면 다음과 같은 형식입니다.
     - https://www.notion.so/[내_아이디]/[캘린더_ID]?v=[캘린더_뷰_ID]
