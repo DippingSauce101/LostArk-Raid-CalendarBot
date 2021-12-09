@@ -190,7 +190,7 @@ namespace DiscordLostArkBot.Discord
 
             if (ServiceHolder.RaidInfo.Exists(modifyRaidCommandParam.RaidDataId) == false)
             {
-                await Context.Channel.SendMessageAsync($"수정 코드 {modifyRaidCommandParam.RaidDataId} 값을 가진 데이터를 찾지 못했어요. " +
+                await Context.Channel.SendMessageAsync($"수정 코드 {modifyRaidCommandParam.RaidDataId} 값을 가진 데이터를 찾지 못했어요.\n" +
                                                        $"값을 확인해 보시고, 관리자에게 연락하시거나 새로 파셔야 할 거 같아요!");
                 return;
             }
@@ -199,30 +199,33 @@ namespace DiscordLostArkBot.Discord
                 modifyRaidCommandParam.NewDateTime);
             if (!modded)
             {
-                await Context.Channel.SendMessageAsync($"수정 코드 {modifyRaidCommandParam.RaidDataId} 값을 가진 데이터의 수정에 실패했어요! " +
+                await Context.Channel.SendMessageAsync($"수정 코드 {modifyRaidCommandParam.RaidDataId} 값을 가진 데이터의 수정에 실패했어요!\n" +
                                                        $"관리자에게 문의하시는 게 좋을 것 같아요...");
                 return;
             }
 
-            var discordRaidInfoKey = ServiceHolder.RaidInfo.DiscordKeyFromDataId(modifyRaidCommandParam.RaidDataId);
+            var discordKey = ServiceHolder.RaidInfo.DiscordKeyFromDataId(modifyRaidCommandParam.RaidDataId);
             var targetMessage = await 
-                DiscordBotClient.Ins.FindUserMessage(discordRaidInfoKey.ChannelId, discordRaidInfoKey.MessageId);
+                DiscordBotClient.Ins.FindUserMessage(discordKey.ChannelId, discordKey.MessageId);
             if (targetMessage == null)
             {
-                await Context.Channel.SendMessageAsync($"수정 코드 {modifyRaidCommandParam.RaidDataId} 값을 가진 메세지를 찾지 못했어요! " +
+                await Context.Channel.SendMessageAsync($"수정 코드 {modifyRaidCommandParam.RaidDataId} 값을 가진 메세지를 찾지 못했어요!\n" +
                                                        $"문제가 계속되면 관리자에게 문의하시는 게 좋을 것 같아요...");
                 return;
             }
             
-            await ServiceHolder.RaidInfo.RefreshDiscordRaidMessage(discordRaidInfoKey, targetMessage);
-            await ServiceHolder.RaidInfo.RefreshNotionRaidPage(discordRaidInfoKey);
-            
-            CultureInfo cultures = CultureInfo.CreateSpecificCulture("ko-KR");
-            await Context.Channel.SendMessageAsync($"[{ServiceHolder.RaidInfo.GetRaidTitle(discordRaidInfoKey)}] 레이드의 시간을 " +
-                                                   $"[{ServiceHolder.RaidInfo.GetRaidTime(discordRaidInfoKey).UtcToKst().ToString("yyyy년 MM월 dd일 ddd요일 HH시 mm분", cultures)}]" +
-                                                   $"으로 수정했어요!");
-            return;
+            await ServiceHolder.RaidInfo.RefreshDiscordRaidMessage(discordKey, targetMessage);
+            await ServiceHolder.RaidInfo.RefreshNotionRaidPage(discordKey);
 
+            var threadUid = ServiceHolder.RaidInfo.GetDiscordThreadUid(discordKey);
+            var threadChannel = (await Context.Client.GetChannelAsync(threadUid)) as IThreadChannel;
+            if (threadChannel != null)
+            {
+                CultureInfo cultures = CultureInfo.CreateSpecificCulture("ko-KR");
+                await threadChannel.SendMessageAsync($"[{ServiceHolder.RaidInfo.GetRaidTitle(discordKey)}] 레이드의 시간을 " +
+                                                     $"[{ServiceHolder.RaidInfo.GetRaidTime(discordKey).UtcToKst().ToString("yyyy년 MM월 dd일 ddd요일 HH시 mm분", cultures)}]" +
+                                                     $"으로 수정했어요!");
+            }
         }
 
         public async Task AddRaid(string paramStr, RaidInfo.RaidPlayer.Role[] roles)
@@ -251,7 +254,8 @@ namespace DiscordLostArkBot.Discord
 
             //공대장은 이 메세지를 보낸 유저로 자동 셋팅
             raidInfo.LeaderDiscordUserId = Context.User.Id;
-
+            ServiceHolder.RaidInfo.Add(raidInfo);
+            
             //명령어 메세지 삭제
             await userCommandMessage.DeleteAsync();
 
@@ -265,9 +269,7 @@ namespace DiscordLostArkBot.Discord
 
             //메세지 스레드 생성
             await CreateThread(raidInfo, messageSent);
-
             raidInfo.DiscordMessageKey = new RaidInfo.DiscordKey(messageSent.Channel.Id, messageSent.Id);
-            ServiceHolder.RaidInfo.Add(raidInfo);
             await NotionBotClient.Ins.CreatePage(raidInfo.DiscordMessageKey, raidInfo.GetNotionPageProperties());
         }
 

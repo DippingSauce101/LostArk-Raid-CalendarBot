@@ -67,6 +67,12 @@ namespace DiscordLostArkBot.Discord
                 return;
             }
             var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, message.Id);
+            //레이드 데이터 삭제 전에 스레드 먼저 삭제!
+            var threadUid = ServiceHolder.RaidInfo.GetDiscordThreadUid(discordRaidInfoKey);
+            if (threadUid == 0) return;
+            if((await Client.GetChannelAsync(threadUid)) is IThreadChannel threadChannel)
+                await threadChannel.DeleteAsync();
+
             await ServiceHolder.RaidInfo.OnRaidMessageDeleted(discordRaidInfoKey);
         }
 
@@ -113,9 +119,14 @@ namespace DiscordLostArkBot.Discord
                 var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, message.Id);
                 if (ServiceHolder.RaidInfo.IsUserLeader(discordRaidInfoKey, reaction.UserId))
                 {
+                    //레이드 데이터 삭제 전에 스레드 먼저 삭제!
+                    var threadUid = ServiceHolder.RaidInfo.GetDiscordThreadUid(discordRaidInfoKey);
+                    if (threadUid == 0) return;
+                    if((await Client.GetChannelAsync(threadUid)) is IThreadChannel threadChannel)
+                        await threadChannel.DeleteAsync();
+                    
                     await ServiceHolder.RaidInfo.OnRaidMessageDeleted(discordRaidInfoKey);
                     await channel.DeleteMessageAsync(message.Id);
-                    //스레드 삭제는 일단 보류! 구현은 가능한데 기록을 남겨둘 필요가 있을수도 있으니까?
                 }
                 else
                 {
