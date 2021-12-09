@@ -284,7 +284,8 @@ namespace DiscordLostArkBot.Discord
 
                 if (modifyRaidCommandParam.NewDateTime == null && string.IsNullOrWhiteSpace(modifyRaidCommandParam.Title) == false)
                 {
-                    await threadChannel.SendMessageAsync($"레이드 이름이 {modifyRaidCommandParam.Title}로 변경되었어요!");
+                    //메세지 보내는거도 Rate Limit에 걸림... 스레드명 변경시 알람 어차피 가니까 추가로 보낼필요 없을듯
+                    //await threadChannel.SendMessageAsync($"레이드 이름이 {modifyRaidCommandParam.Title}로 변경되었어요!");
                 }
                 else
                 {
