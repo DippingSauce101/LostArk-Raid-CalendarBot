@@ -28,23 +28,32 @@
 ## 봇 설정하기
 
 - 디스코드에 봇 등록은 공식 가이드라인을 참고하세요. [디스코드 개발자 포탈](https://discord.com/developers/applications)
-  - 봇의 API Token을 [Settings.cs](https://github.com/DippingSauce101/LostArk-Raid-CalendarBot/blob/81c917716e2f3bce482d6b1d40ef84e110b12103/DiscordLostArkBot/Constants/Settings.cs#L5) 파일의 DiscordBotToken에 복붙하세요.
 - 노션 API 통합은 다음과 같이 진행합니다.
   - https://developers.notion.com/ 접속
   - 우측 위 My Integrations 클릭
   - ![image](https://user-images.githubusercontent.com/94309745/142361414-a8cab82a-652d-4e41-a7b8-2f85168b1fb8.png)
   - ![image](https://user-images.githubusercontent.com/94309745/142361493-4f334e95-3773-4234-856f-5d275ad81be1.png)
   - Create New Integration 클릭하여 내 워크스페이스 연결
-  - ![image](https://user-images.githubusercontent.com/94309745/142361543-a0670199-ad6a-4246-a4e4-ccbf1754e272.png)
-  - 위 값을 복사하여 [Settings.cs](https://github.com/DippingSauce101/LostArk-Raid-CalendarBot/blob/81c917716e2f3bce482d6b1d40ef84e110b12103/DiscordLostArkBot/Constants/Settings.cs#L6) 파일의 NotionApiAutoToken에 복붙
-    - ![image](https://user-images.githubusercontent.com/94309745/142361641-58401995-32f8-40d5-985a-733d1db13bf3.png)
   - 노션의 API 접근자를 초대합니다.
     - ![image](https://user-images.githubusercontent.com/94309745/144707565-06f484d0-e33b-49aa-84d3-713e0490ee70.png)
   - ***노션 캘린더에 '레이드명', '참가자', '날짜' 프로퍼티를 추가해야합니다.***
     - ![image](https://user-images.githubusercontent.com/94309745/144707652-4453c68d-e268-46ee-8ad3-3213cea8d287.png)
-  - 노션의 캘린더를 열어보면 다음과 같은 형식입니다.
+
+## Tokens.ini
+
+- 디스코드 및 노션 클라이언트가 접속하기 위해 Token 값들이 필요합니다.
+- .exe 파일이 빌드된 경로에 Tokens.ini 파일을 생성한 뒤 값을 입력합니다.
+  - DiscordBotToken
+    - 디스코드 봇의 Auth Token 값을 입력합니다.
+    - ![image](https://user-images.githubusercontent.com/94309745/145357508-6a8b6982-711b-47aa-8ca8-2e9d5b977bba.png)
+  - NotionApiAuthToken
+    - ![image](https://user-images.githubusercontent.com/94309745/145357658-ed0cd11d-c27f-49be-ab10-efaf0a7a10e7.png)
+  - NotionCalendarDBId
+    - 노션의 캘린더를 열어보면 다음과 같은 형식입니다.
     - https://www.notion.so/[내_아이디]/[캘린더_ID]?v=[캘린더_뷰_ID]
-    - 여기서 중간의 [캘린더_ID]를 복사해 [Settings.cs](https://github.com/DippingSauce101/LostArk-Raid-CalendarBot/blob/81c917716e2f3bce482d6b1d40ef84e110b12103/DiscordLostArkBot/Constants/Settings.cs#L7) 파일의 NotionCalendarDbId에 복붙하시면 끝.
+    - 중간의 [캘린더_ID] 부분을 붙여넣으세요.
+  - NotionCalendarUrl
+    - 노션 캘린더 링크 값입니다.
 
 ## Known Issue
 
