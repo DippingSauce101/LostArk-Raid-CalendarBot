@@ -1,11 +1,8 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Discord;
 using DiscordLostArkBot.Constants;
-using DiscordLostArkBot.Discord;
 using DiscordLostArkBot.Service;
 using DiscordLostArkBot.Utilities;
 using Newtonsoft.Json;
@@ -19,23 +16,24 @@ namespace DiscordLostArkBot.Model
     public class DB : Singleton<DB>
     {
         /// <summary>
-        /// 통짜 파일로 저장해도 되지만 레이드 정보 데이터가 늘어날수록 파일 Read/Write가 점점 느려질테니 RaidInfo 데이터 각각을
-        /// 따로 파일로 저장하도록 수정함 
+        ///     통짜 파일로 저장해도 되지만 레이드 정보 데이터가 늘어날수록 파일 Read/Write가 점점 느려질테니 RaidInfo 데이터 각각을
+        ///     따로 파일로 저장하도록 수정함
         /// </summary>
-        public RaidInfoCollection RaidInfoCollection = new RaidInfoCollection();
+        public RaidInfoCollection RaidInfoCollection = new();
 
         public static DB Init()
         {
             //Initialize Presenters
-            var dbIns = DB.Ins;
+            var dbIns = Ins;
             if (dbIns.LoadAll())
             {
                 Console.WriteLine("Loaded Database!");
                 Console.WriteLine($"{Ins.RaidInfoCollection.GetCount()} Raid infos loaded...");
-                for (int i = 0; i < Ins.RaidInfoCollection.GetCount(); i++)
+                for (var i = 0; i < Ins.RaidInfoCollection.GetCount(); i++)
                 {
                     var info = Ins.RaidInfoCollection.ElementAt(i);
-                    Console.WriteLine($"\t[{i}] {String.Format("{0,-27}", info.Title)} {info.RaidDateTimeUtc.ToString("yyyy-MM-dd HH:mm")}");
+                    Console.WriteLine(
+                        $"\t[{i}] {string.Format("{0,-27}", info.Title)} {info.RaidDateTimeUtc.ToString("yyyy-MM-dd HH:mm")}");
                 }
             }
             else
@@ -43,12 +41,13 @@ namespace DiscordLostArkBot.Model
                 Console.WriteLine("Database load from file failed...");
                 Console.WriteLine("Creating new db!");
             }
+
             ServiceHolder.InitServices(Ins.RaidInfoCollection);
             return dbIns;
         }
 
         /// <summary>
-        /// 저장된 데이터의 정합성 검사
+        ///     저장된 데이터의 정합성 검사
         /// </summary>
         /// <returns></returns>
         // public static async Task<int> Validate()
@@ -72,20 +71,16 @@ namespace DiscordLostArkBot.Model
         //         }
         //     }
         // }
-
-        private static async Task<bool> ValidateUserRoleFromDiscordMessage(RaidInfo.RaidInfo savedInfo, IMessage message, RaidInfo.RaidInfo.RaidPlayer.Role targetRole)
+        private static async Task<bool> ValidateUserRoleFromDiscordMessage(RaidInfo.RaidInfo savedInfo,
+            IMessage message, RaidInfo.RaidInfo.RaidPlayer.Role targetRole)
         {
             var roleEmoji = RaidEmoji.RoleToDiscordEmoji(targetRole);
             //메세지의 리액션 정보를 읽어 저장된 데이터와 일치하는지 체크한다
             var reactedUsers = await message.GetReactionUsersAsync(roleEmoji, 10)
                 .FlattenAsync();
             foreach (var reactedUser in reactedUsers)
-            {
                 if (savedInfo.UserAlreadySeatedWithRole(reactedUser.Id, targetRole) == false)
-                {
                     return false;
-                }
-            }
             return true;
         }
 
@@ -95,13 +90,13 @@ namespace DiscordLostArkBot.Model
             {
                 var savePath = GetSaveFilePath(raidInfo);
                 var serializedText = JsonConvert.SerializeObject(raidInfo, Formatting.Indented);
-                File.WriteAllText(savePath, serializedText );
+                File.WriteAllText(savePath, serializedText);
                 Console.WriteLine($"Saved at {savePath}");
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"!!!Exception during saving raid infos data!!!");
+                Console.WriteLine("!!!Exception during saving raid infos data!!!");
                 Console.WriteLine(ex.ToString());
                 return false;
             }
@@ -122,8 +117,7 @@ namespace DiscordLostArkBot.Model
             }
             catch (Exception ex)
             {
-                
-                Console.WriteLine($"!!!Exception during deleting raid infos data!!!");
+                Console.WriteLine("!!!Exception during deleting raid infos data!!!");
                 Console.WriteLine(ex.ToString());
                 return false;
             }
@@ -138,33 +132,27 @@ namespace DiscordLostArkBot.Model
             {
                 var text = File.ReadAllText(filePath);
                 var deserialized = JsonConvert.DeserializeObject<RaidInfo.RaidInfo>(text);
-                if (deserialized != null)
-                {
-                    RaidInfoCollection.Add(deserialized);
-                }
+                if (deserialized != null) RaidInfoCollection.Add(deserialized);
             }
 
             return true;
         }
-        
-        static string GetSaveDirectoryPath()
+
+        private static string GetSaveDirectoryPath()
         {
             var subDir = $"{AppContext.BaseDirectory}/RaidInfoDatas/";
             return subDir;
         }
-        
-        static string GetSaveFilePath(RaidInfo.RaidInfo info)
+
+        private static string GetSaveFilePath(RaidInfo.RaidInfo info)
         {
             var dir = GetSaveDirectoryPath();
-            if (Directory.Exists(dir) == false)
-            {
-                Directory.CreateDirectory(dir);
-            }
+            if (Directory.Exists(dir) == false) Directory.CreateDirectory(dir);
 
             //파일명 규칙 - [UTC_Millis]_[디스코드 채널 Id]_[디스코드 메세지 Id]
             var path =
                 $"{dir}{info.GetRaidFileName()}.json";
             return path;
-        } 
+        }
     }
 }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord;
 using DiscordLostArkBot.Constants;
-using DiscordLostArkBot.Discord;
 using DiscordLostArkBot.Model;
 using DiscordLostArkBot.Model.RaidInfo;
 using DiscordLostArkBot.Notion;
@@ -44,7 +43,7 @@ namespace DiscordLostArkBot.Service
         {
             return FindRaidInfo(dataId) != null;
         }
-        
+
         public RaidInfo.DiscordKey DiscordKeyFromDataId(ulong dataId)
         {
             var raidInfo = FindRaidInfo(dataId);
@@ -56,15 +55,9 @@ namespace DiscordLostArkBot.Service
         {
             var raidInfo = FindRaidInfo(dataId);
             if (raidInfo == null) return false;
-            if (string.IsNullOrWhiteSpace(title) == false)
-            {
-                raidInfo.Title = title;
-            }
+            if (string.IsNullOrWhiteSpace(title) == false) raidInfo.Title = title;
 
-            if (utcDateTime.HasValue)
-            {
-                raidInfo.RaidDateTimeUtc = utcDateTime.Value;
-            }
+            if (utcDateTime.HasValue) raidInfo.RaidDateTimeUtc = utcDateTime.Value;
             DB.Ins.SaveToFile(raidInfo);
             return true;
         }
@@ -77,7 +70,7 @@ namespace DiscordLostArkBot.Service
 
             return true;
         }
-        
+
         public bool UserAlreadySeated(RaidInfo.DiscordKey discordKey, ulong userId)
         {
             var raidInfo = FindRaidInfo(discordKey);
@@ -116,10 +109,7 @@ namespace DiscordLostArkBot.Service
                     removed = true;
                 }
 
-            if (removed)
-            {            
-                DB.Ins.SaveToFile(raidInfo);
-            }
+            if (removed) DB.Ins.SaveToFile(raidInfo);
 
             return removed;
         }
@@ -135,7 +125,7 @@ namespace DiscordLostArkBot.Service
         {
             var raidInfo = FindRaidInfo(discordKey);
             if (raidInfo == null) return;
-            
+
             var notionCalendarPageId = GetNotionCalendarPageId(discordKey);
             Remove(raidInfo);
             await NotionBotClient.Ins.DeletePage(notionCalendarPageId);
@@ -145,23 +135,38 @@ namespace DiscordLostArkBot.Service
         {
             var raidInfo = FindRaidInfo(discordKey);
             if (raidInfo == null) return 0;
-            else return raidInfo.DiscordMessageThreadId;
+            return raidInfo.DiscordMessageThreadId;
         }
 
         public string GetRaidTitle(RaidInfo.DiscordKey discordKey)
         {
             var raidInfo = FindRaidInfo(discordKey);
             if (raidInfo == null) return null;
-            else return raidInfo.Title;
+            return raidInfo.Title;
         }
-        
+
         public DateTime GetRaidTime(RaidInfo.DiscordKey discordKey)
         {
             var raidInfo = FindRaidInfo(discordKey);
             if (raidInfo == null) throw new NullReferenceException("Data not found!");
-            else return raidInfo.RaidDateTimeUtc;
+            return raidInfo.RaidDateTimeUtc;
         }
-        
+
+        private RaidInfo FindRaidInfo(ulong dataId)
+        {
+            return _raidInfoCollection.FindRaidInfo(dataId);
+        }
+
+        private RaidInfo FindRaidInfo(ulong discordChannelId, ulong discordMessageId)
+        {
+            return _raidInfoCollection.FindRaidInfo(discordChannelId, discordMessageId);
+        }
+
+        private RaidInfo FindRaidInfo(RaidInfo.DiscordKey discordKey)
+        {
+            return _raidInfoCollection.FindRaidInfo(discordKey.ChannelId, discordKey.MessageId);
+        }
+
         #region Notion Logics
 
         public string GetNotionCalendarPageId(RaidInfo.DiscordKey discordKey)
@@ -187,11 +192,11 @@ namespace DiscordLostArkBot.Service
             DB.Ins.SaveToFile(raidInfo);
             return true;
         }
-        
+
         #endregion
-        
+
         #region Tasks
-        
+
         public async Task RemoveDiscordOldRoleReaction(RaidInfo.DiscordKey discordKey, ulong userId,
             IUserMessage userMessage, RaidInfo.RaidPlayer.Role newRole)
         {
@@ -228,22 +233,7 @@ namespace DiscordLostArkBot.Service
             await raidInfo.RefreshUserCache();
             await NotionBotClient.Ins.UpdatePage(raidInfo.NotionCalenderPageId, raidInfo.GetNotionPageProperties());
         }
-        
+
         #endregion
-
-        private RaidInfo FindRaidInfo(ulong dataId)
-        {
-            return _raidInfoCollection.FindRaidInfo(dataId);
-        }
-
-        private RaidInfo FindRaidInfo(ulong discordChannelId, ulong discordMessageId)
-        {
-            return _raidInfoCollection.FindRaidInfo(discordChannelId, discordMessageId);
-        }
-
-        private RaidInfo FindRaidInfo(RaidInfo.DiscordKey discordKey)
-        {
-            return _raidInfoCollection.FindRaidInfo(discordKey.ChannelId, discordKey.MessageId);
-        }
     }
 }

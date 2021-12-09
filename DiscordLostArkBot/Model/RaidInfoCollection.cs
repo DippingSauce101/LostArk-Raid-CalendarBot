@@ -4,7 +4,6 @@ using Newtonsoft.Json;
 
 namespace DiscordLostArkBot.Model
 {
-    
     [JsonObject(MemberSerialization.OptIn)]
     public class RaidInfoCollection
     {
@@ -34,13 +33,10 @@ namespace DiscordLostArkBot.Model
                 })
                 .FirstOrDefault();
         }
-        
+
         public RaidInfo.RaidInfo FindRaidInfo(ulong dataId)
         {
-            return _raidInfos.Where(info =>
-                {
-                    return info.DataId == dataId;
-                })
+            return _raidInfos.Where(info => { return info.DataId == dataId; })
                 .FirstOrDefault();
         }
 

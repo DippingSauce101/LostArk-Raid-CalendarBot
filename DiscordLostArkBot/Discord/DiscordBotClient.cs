@@ -6,7 +6,6 @@ using Discord.Commands;
 using Discord.WebSocket;
 using DiscordLostArkBot.Constants;
 using DiscordLostArkBot.Model.RaidInfo;
-using DiscordLostArkBot.Notion;
 using DiscordLostArkBot.Service;
 using DiscordLostArkBot.Utilities;
 
@@ -49,16 +48,14 @@ namespace DiscordLostArkBot.Discord
 
         public async Task<IUserMessage> FindUserMessage(ulong channelId, ulong messageId)
         {
-            var channel = (await Client.GetChannelAsync(channelId)) as ITextChannel;
-            if (channel == null)
-            {
-                return null;
-            }
-            var message = (await channel.GetMessageAsync(messageId)) as IUserMessage;
+            var channel = await Client.GetChannelAsync(channelId) as ITextChannel;
+            if (channel == null) return null;
+            var message = await channel.GetMessageAsync(messageId) as IUserMessage;
             return message;
         }
 
-        private async Task OnClientMessageDeleted(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> cacheable)
+        private async Task OnClientMessageDeleted(Cacheable<IMessage, ulong> message,
+            Cacheable<IMessageChannel, ulong> cacheable)
         {
             var channel = await cacheable.GetOrDownloadAsync();
             if (channel == null)
@@ -66,11 +63,12 @@ namespace DiscordLostArkBot.Discord
                 Console.WriteLine("OnClientMessageDeleted : Retrieving channel failed!!!");
                 return;
             }
+
             var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, message.Id);
             //레이드 데이터 삭제 전에 스레드 먼저 삭제!
             var threadUid = ServiceHolder.RaidInfo.GetDiscordThreadUid(discordRaidInfoKey);
             if (threadUid == 0) return;
-            if((await Client.GetChannelAsync(threadUid)) is IThreadChannel threadChannel)
+            if (await Client.GetChannelAsync(threadUid) is IThreadChannel threadChannel)
                 await threadChannel.DeleteAsync();
 
             await ServiceHolder.RaidInfo.OnRaidMessageDeleted(discordRaidInfoKey);
@@ -106,13 +104,10 @@ namespace DiscordLostArkBot.Discord
             Cacheable<IMessageChannel, ulong> cacheable,
             SocketReaction reaction)
         {
-            IUser reactedUser = reaction.User.GetValueOrDefault();
-            if (reactedUser == null)
-            {
-                reactedUser = await Client.GetUserAsync(reaction.UserId);
-            }
+            var reactedUser = reaction.User.GetValueOrDefault();
+            if (reactedUser == null) reactedUser = await Client.GetUserAsync(reaction.UserId);
             if (reactedUser == null || reactedUser.IsBot) return;
-            
+
             if (RaidEmoji.IsCrossEmote(reaction.Emote))
             {
                 var channel = await cacheable.GetOrDownloadAsync();
@@ -121,6 +116,7 @@ namespace DiscordLostArkBot.Discord
                     Console.WriteLine("OnReactionAdded : Retrieving channel failed!!!");
                     return;
                 }
+
                 //Cross Emote 누른 유저가 공대장일 경우에만 메세지 삭제!
                 var discordRaidInfoKey = new RaidInfo.DiscordKey(channel.Id, message.Id);
                 if (ServiceHolder.RaidInfo.IsUserLeader(discordRaidInfoKey, reaction.UserId))
@@ -128,9 +124,9 @@ namespace DiscordLostArkBot.Discord
                     //레이드 데이터 삭제 전에 스레드 먼저 삭제!
                     var threadUid = ServiceHolder.RaidInfo.GetDiscordThreadUid(discordRaidInfoKey);
                     if (threadUid == 0) return;
-                    if((await Client.GetChannelAsync(threadUid)) is IThreadChannel threadChannel)
+                    if (await Client.GetChannelAsync(threadUid) is IThreadChannel threadChannel)
                         await threadChannel.DeleteAsync();
-                    
+
                     await ServiceHolder.RaidInfo.OnRaidMessageDeleted(discordRaidInfoKey);
                     await channel.DeleteMessageAsync(message.Id);
                 }
@@ -156,7 +152,8 @@ namespace DiscordLostArkBot.Discord
                 if (ServiceHolder.RaidInfo.CanAddPlayer(discordRaidInfoKey, targetRole) == false) return;
 
                 var userMessage = await message.GetUserMessageAsync();
-                await ServiceHolder.RaidInfo.RemoveDiscordOldRoleReaction(discordRaidInfoKey, reaction.UserId, userMessage,
+                await ServiceHolder.RaidInfo.RemoveDiscordOldRoleReaction(discordRaidInfoKey, reaction.UserId,
+                    userMessage,
                     targetRole);
                 ServiceHolder.RaidInfo.AddOrChangePlayerRole(discordRaidInfoKey, reaction.UserId, targetRole);
                 await ServiceHolder.RaidInfo.RefreshDiscordRaidMessage(discordRaidInfoKey, userMessage);
@@ -164,20 +161,17 @@ namespace DiscordLostArkBot.Discord
                 // var notionCalendarPageId = ServiceHolder.RaidInfo.GetNotionCalendarPageId(discordRaidInfoKey);
                 // var notionCalendarPageProperies = ServiceHolder.RaidInfo.GetNotionCalendarPageProperies(discordRaidInfoKey);
                 // await NotionBotClient.Ins.UpdatePage(notionCalendarPageId, notionCalendarPageProperies);
-            }            
+            }
         }
 
         private async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> message,
             Cacheable<IMessageChannel, ulong> cacheable,
             SocketReaction reaction)
         {
-            IUser reactedUser = reaction.User.GetValueOrDefault();
-            if (reactedUser == null)
-            {
-                reactedUser = await Client.GetUserAsync(reaction.UserId);
-            }
+            var reactedUser = reaction.User.GetValueOrDefault();
+            if (reactedUser == null) reactedUser = await Client.GetUserAsync(reaction.UserId);
             if (reactedUser == null || reactedUser.IsBot) return;
-            
+
             if (RaidEmoji.IsRaidRoleEmote(reaction.Emote) == false) return;
             var channel = await cacheable.GetOrDownloadAsync();
             if (channel == null)
@@ -185,7 +179,7 @@ namespace DiscordLostArkBot.Discord
                 Console.WriteLine("OnReactionAdded : Retrieving channel failed!!!");
                 return;
             }
-            
+
             var userMessage = await message.GetUserMessageAsync();
             var targetRole = RaidEmoji.EmojiStringToRole(reaction.Emote.Name);
 

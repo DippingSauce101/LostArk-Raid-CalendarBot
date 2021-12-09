@@ -215,9 +215,9 @@ namespace DiscordLostArkBot.Utilities
     public class IniFile : IEnumerable<KeyValuePair<string, IniSection>>, IDictionary<string, IniSection>
     {
         public static IEqualityComparer<string> DefaultComparer = new CaseInsensitiveStringComparer();
+        private readonly Dictionary<string, IniSection> sections;
 
         public bool SaveEmptySections;
-        private readonly Dictionary<string, IniSection> sections;
         public IEqualityComparer<string> StringComparer;
 
         public IniFile()

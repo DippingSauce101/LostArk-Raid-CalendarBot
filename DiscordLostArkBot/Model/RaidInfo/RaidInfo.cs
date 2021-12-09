@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,7 +18,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
     public class RaidInfo
     {
         /// <summary>
-        /// 8인 레이드 역할분담
+        ///     8인 레이드 역할분담
         /// </summary>
         public static readonly RaidPlayer.Role[] EightRaidRoles =
         {
@@ -32,9 +31,9 @@ namespace DiscordLostArkBot.Model.RaidInfo
             RaidPlayer.Role.Support,
             RaidPlayer.Role.Support
         };
-        
+
         /// <summary>
-        /// 4인 레이드 역할분담
+        ///     4인 레이드 역할분담
         /// </summary>
         public static readonly RaidPlayer.Role[] FourRaidRoles =
         {
@@ -45,16 +44,24 @@ namespace DiscordLostArkBot.Model.RaidInfo
         };
 
         [JsonProperty] public ulong DataId;
-        [JsonProperty] public DateTime RaidDateTimeUtc;
         [JsonProperty] public DiscordKey DiscordMessageKey;
         [JsonProperty] public ulong DiscordMessageThreadId;
+        [JsonProperty] public ulong LeaderDiscordUserId;
         [JsonProperty] public string NotionCalenderPageId;
+        [JsonProperty] public DateTime RaidDateTimeUtc;
         [JsonProperty] public RaidPlayer[] RaidPlayers;
         [JsonProperty] public string Title;
-        [JsonProperty] public ulong LeaderDiscordUserId;
 
         /// <summary>
-        /// Extension 없이, Discord Key와 Raid DateTime을 키값으로 한 파일명 생성
+        ///     Json Serializer의 경우 Paramless Constructer를 필요로 한다.
+        ///     따라서 Create 함수를 쓰고, private로 생성을 막아두자.
+        /// </summary>
+        private RaidInfo()
+        {
+        }
+
+        /// <summary>
+        ///     Extension 없이, Discord Key와 Raid DateTime을 키값으로 한 파일명 생성
         /// </summary>
         /// <returns></returns>
         public string GetRaidFileName()
@@ -62,23 +69,11 @@ namespace DiscordLostArkBot.Model.RaidInfo
             return $"{DataId}";
         }
 
-        /// <summary>
-        /// Json Serializer의 경우 Paramless Constructer를 필요로 한다.
-        /// 따라서 Create 함수를 쓰고, private로 생성을 막아두자.
-        /// </summary>
-        private RaidInfo()
-        {
-            
-        }
-
         public static RaidInfo Create(int playerCount, ulong dataId, params RaidPlayer.Role[] roles)
         {
-            RaidInfo info = new RaidInfo();
-            if (playerCount != roles.Length)
-            {
-                throw new InvalidDataException("레이드 유저 숫자의 역할 데이터와 유저 수 데이터가 일치하지 않습니다!");
-            }
-            
+            var info = new RaidInfo();
+            if (playerCount != roles.Length) throw new InvalidDataException("레이드 유저 숫자의 역할 데이터와 유저 수 데이터가 일치하지 않습니다!");
+
             info.RaidPlayers = new RaidPlayer[playerCount];
             for (var i = 0; i < playerCount; i++)
                 info.RaidPlayers[i] = new RaidPlayer
@@ -95,7 +90,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
         {
             return $"{RaidPlayers.Length}인 레이드 / 공대장: {LeaderDiscordUserId.DiscordUserIdToRefString()}";
         }
-        
+
         public EmbedBuilder GetEmbedBuilder()
         {
             var eb = new EmbedBuilder();
@@ -119,10 +114,10 @@ namespace DiscordLostArkBot.Model.RaidInfo
             // eb.AddField("서포터",
             //     GetFilledRoleCount(RaidPlayer.Role.Support) + "/" + GetRoleSeatCount(RaidPlayer.Role.Support), true);
 
-            eb.AddField("날짜", RaidDateTimeUtc.UtcToKst().ToString(@"yy\/MM\/dd (ddd요일) HH:mm"), false);
-            eb.AddField("수정 코드", DataId.ToString(), false);
+            eb.AddField("날짜", RaidDateTimeUtc.UtcToKst().ToString(@"yy\/MM\/dd (ddd요일) HH:mm"));
+            eb.AddField("수정 코드", DataId.ToString());
 
-           //eb.Timestamp = RaidDateTimeUtc;
+            //eb.Timestamp = RaidDateTimeUtc;
 
             return eb;
         }
@@ -167,10 +162,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
 
         public async Task RefreshUserCache()
         {
-            foreach (var raidPlayer in RaidPlayers)
-            {
-                await raidPlayer.RefreshUserInfoFromDiscord();
-            }
+            foreach (var raidPlayer in RaidPlayers) await raidPlayer.RefreshUserInfoFromDiscord();
         }
 
         public Dictionary<string, PropertyValue> GetNotionPageProperties()
@@ -238,9 +230,9 @@ namespace DiscordLostArkBot.Model.RaidInfo
             });
 
             var kstRaidDateTime = RaidDateTimeUtc.UtcToKst();
-            propertyValues.Add("날짜", new TimeZoneDatePropertyValue()
+            propertyValues.Add("날짜", new TimeZoneDatePropertyValue
             {
-                Date = new TimeZoneDate()
+                Date = new TimeZoneDate
                 {
                     Start = kstRaidDateTime.ToIso8601(),
                     End = kstRaidDateTime.AddHours(1).ToIso8601()
@@ -265,7 +257,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
         {
             var player = RaidPlayers.Where(player => { return player.UserId == userId; }).FirstOrDefault();
             if (player != null) return player.UserRole;
-            
+
             return RaidPlayer.Role.Error;
         }
 
@@ -328,32 +320,28 @@ namespace DiscordLostArkBot.Model.RaidInfo
             }
 
             public const ulong UserEmpty = 0;
-            
-            [JsonProperty] public ulong UserId = 0;
+
+            [JsonProperty] public ulong UserId;
             [JsonProperty] public Role UserRole;
 
             //BugFix - GetUser()의 경우 캐싱이 안 되어 있을 수 있음!! Async 작동이 필요하다!!
-            public string CachedUserName => _userNameCached;
+            [field: JsonProperty] public string CachedUserName { get; private set; }
 
-            [JsonProperty] private string _userNameCached;
             public async Task<string> RefreshUserInfoFromDiscord()
             {
                 if (UserId == 0 || UserRole == Role.Error) return null;
                 var cachedUser = DiscordBotClient.Ins.Client.GetUser(UserId);
                 if (cachedUser != null)
                 {
-                    _userNameCached = cachedUser.Username;
+                    CachedUserName = cachedUser.Username;
                 }
                 else
                 {
-                    var user = (await DiscordBotClient.Ins.Client.GetUserAsync(UserId));
-                    if (user != null)
-                    {
-                        _userNameCached = user.Username;
-                    }
+                    var user = await DiscordBotClient.Ins.Client.GetUserAsync(UserId);
+                    if (user != null) CachedUserName = user.Username;
                 }
-                
-                return _userNameCached;
+
+                return CachedUserName;
             }
 
             public bool IsEmpty()

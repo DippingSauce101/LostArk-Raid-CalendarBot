@@ -25,9 +25,7 @@ namespace DiscordLostArkBot.Constants
                 string.IsNullOrWhiteSpace(NotionApiAuthToken) ||
                 string.IsNullOrWhiteSpace(NotionCalendarDbId) ||
                 string.IsNullOrWhiteSpace(NotionCalendarUrl))
-            {
                 return false;
-            }
 
             return true;
         }

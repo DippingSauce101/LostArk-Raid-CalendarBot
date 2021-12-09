@@ -17,15 +17,15 @@ namespace DiscordLostArkBot.Utilities
         public static DateTime KstToUtc(this DateTime dateTime)
         {
             dateTime = TimeZoneInfo.ConvertTimeToUtc(dateTime);
-            DateTime utcDateTime = new DateTime(dateTime.Ticks, DateTimeKind.Utc);
+            var utcDateTime = new DateTime(dateTime.Ticks, DateTimeKind.Utc);
             return utcDateTime;
         }
-        
+
         public static DateTime UtcToKst(this DateTime dateTime)
         {
             var kst = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
             dateTime = TimeZoneInfo.ConvertTimeFromUtc(dateTime, kst);
-            DateTime kstDateTime = new DateTime(dateTime.Ticks, DateTimeKind.Local);
+            var kstDateTime = new DateTime(dateTime.Ticks, DateTimeKind.Local);
             return kstDateTime;
         }
     }

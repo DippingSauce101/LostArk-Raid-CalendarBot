@@ -25,9 +25,9 @@ namespace DiscordLostArkBot.Constants
         {
             switch (role)
             {
-                case RaidInfo.RaidPlayer.Role.Deal :
+                case RaidInfo.RaidPlayer.Role.Deal:
                     return "딜러";
-                case RaidInfo.RaidPlayer.Role.Support :
+                case RaidInfo.RaidPlayer.Role.Support:
                     return "서포터";
                 default:
                     return null;
@@ -38,9 +38,9 @@ namespace DiscordLostArkBot.Constants
         {
             switch (role)
             {
-                case RaidInfo.RaidPlayer.Role.Deal :
+                case RaidInfo.RaidPlayer.Role.Deal:
                     return EmojiSwordCrossed;
-                case RaidInfo.RaidPlayer.Role.Support :
+                case RaidInfo.RaidPlayer.Role.Support:
                     return EmojiShield;
                 default:
                     return null;
@@ -51,15 +51,15 @@ namespace DiscordLostArkBot.Constants
         {
             switch (role)
             {
-                case RaidInfo.RaidPlayer.Role.Deal :
+                case RaidInfo.RaidPlayer.Role.Deal:
                     return new Emoji(EmojiSwordCrossed);
-                case RaidInfo.RaidPlayer.Role.Support :
+                case RaidInfo.RaidPlayer.Role.Support:
                     return new Emoji(EmojiShield);
                 default:
                     return null;
             }
         }
-        
+
         public static RaidInfo.RaidPlayer.Role EmojiStringToRole(string emojiStr)
         {
             if (emojiStr.Equals(EmojiShield))
