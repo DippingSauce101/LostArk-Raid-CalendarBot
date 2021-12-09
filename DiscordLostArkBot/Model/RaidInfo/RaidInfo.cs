@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Discord;
 using DiscordLostArkBot.Constants;
 using DiscordLostArkBot.Discord;
@@ -113,13 +114,15 @@ namespace DiscordLostArkBot.Model.RaidInfo
 
             eb.Description = description;
 
-            eb.AddField("딜러", GetFilledRoleCount(RaidPlayer.Role.Deal) + "/" + GetRoleSeatCount(RaidPlayer.Role.Deal),
-                true);
-            eb.AddField("서포터",
-                GetFilledRoleCount(RaidPlayer.Role.Support) + "/" + GetRoleSeatCount(RaidPlayer.Role.Support), true);
+            // eb.AddField("딜러", GetFilledRoleCount(RaidPlayer.Role.Deal) + "/" + GetRoleSeatCount(RaidPlayer.Role.Deal),
+            //     true);
+            // eb.AddField("서포터",
+            //     GetFilledRoleCount(RaidPlayer.Role.Support) + "/" + GetRoleSeatCount(RaidPlayer.Role.Support), true);
 
+            eb.AddField("날짜", RaidDateTimeUtc.UtcToKst().ToString(@"yy\/MM\/dd (ddd요일) HH:mm"), false);
             eb.AddField("수정 코드", DataId.ToString(), false);
-            eb.Timestamp = RaidDateTimeUtc;
+
+           //eb.Timestamp = RaidDateTimeUtc;
 
             return eb;
         }
@@ -159,7 +162,15 @@ namespace DiscordLostArkBot.Model.RaidInfo
             if (player.IsEmpty())
                 return
                     $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}{index + 1}번{RaidEmoji.RoleToKrString(player.UserRole)}";
-            return $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}{player.UserName}";
+            return $@"{RaidEmoji.RoleToEmojiString(player.UserRole)}{player.CachedUserName}";
+        }
+
+        public async Task RefreshUserCache()
+        {
+            foreach (var raidPlayer in RaidPlayers)
+            {
+                await raidPlayer.RefreshUserInfoFromDiscord();
+            }
         }
 
         public Dictionary<string, PropertyValue> GetNotionPageProperties()
@@ -321,7 +332,29 @@ namespace DiscordLostArkBot.Model.RaidInfo
             [JsonProperty] public ulong UserId = 0;
             [JsonProperty] public Role UserRole;
 
-            public string UserName => DiscordBotClient.Ins.Client.GetUser(UserId).Username;
+            //BugFix - GetUser()의 경우 캐싱이 안 되어 있을 수 있음!! Async 작동이 필요하다!!
+            public string CachedUserName => _userNameCached;
+
+            [JsonProperty] private string _userNameCached;
+            public async Task<string> RefreshUserInfoFromDiscord()
+            {
+                if (UserId == 0 || UserRole == Role.Error) return null;
+                var cachedUser = DiscordBotClient.Ins.Client.GetUser(UserId);
+                if (cachedUser != null)
+                {
+                    _userNameCached = cachedUser.Username;
+                }
+                else
+                {
+                    var user = (await DiscordBotClient.Ins.Client.GetUserAsync(UserId));
+                    if (user != null)
+                    {
+                        _userNameCached = user.Username;
+                    }
+                }
+                
+                return _userNameCached;
+            }
 
             public bool IsEmpty()
             {

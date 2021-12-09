@@ -140,11 +140,13 @@ namespace DiscordLostArkBot.Discord
         private struct ModifyRaidCommandParam
         {
             public ulong RaidDataId;
-            public DateTime NewDateTime;
+            public string Title;
+            public DateTime? NewDateTime;
 
-            public ModifyRaidCommandParam(ulong raidDataId, DateTime newDateTime)
+            public ModifyRaidCommandParam(ulong raidDataId, string title, DateTime? newDateTime)
             {
                 RaidDataId = raidDataId;
+                Title = title;
                 NewDateTime = newDateTime;
             }
         }
@@ -152,9 +154,14 @@ namespace DiscordLostArkBot.Discord
         private bool ParseModifyRaidCommandParam(string paramStr, out ModifyRaidCommandParam modifyRaidCommandParam)
         {
             var raidDataIdParsed = ParseRaidDataId(paramStr, out var parsedRaidDataId);
+            //title은 파싱 실패해도 노상관!
+            var titleParsed = ParseRaidTitle(paramStr, out var parsedRaidTitle);
             var dateTimeParsed = ParseParenthesisedDateTimeFromString(paramStr, out var parsedDateTime);
-            modifyRaidCommandParam = new ModifyRaidCommandParam(parsedRaidDataId, parsedDateTime);
-            return raidDataIdParsed && dateTimeParsed;
+            
+            modifyRaidCommandParam = new ModifyRaidCommandParam(parsedRaidDataId,
+                titleParsed ? parsedRaidTitle : null,
+                dateTimeParsed ? parsedDateTime : null);
+            return raidDataIdParsed && (dateTimeParsed || titleParsed);
         }
 
         private bool ParseRaidDataId(string paramStr, out ulong parsedRaidDataId)
@@ -173,6 +180,46 @@ namespace DiscordLostArkBot.Discord
             return false;
         }
         
+        private bool ParseRaidTitle(string paramStr, out string parsedTitle)
+        {
+            var firstParam = paramStr.Split(' ').First();
+            if (string.IsNullOrWhiteSpace(firstParam))
+            {
+                parsedTitle = null;
+                return false;
+            }
+
+            var titleStart = paramStr.IndexOf(firstParam) + firstParam.Length;
+            
+            Regex parenRegEx = new Regex(@"\(([^)]*)\)");
+            bool dateTimeParsed = false;
+            string dateTimeParenthesised = null;
+            foreach (Match match in parenRegEx.Matches(paramStr))
+            {
+                dateTimeParenthesised = match.Value; 
+                var dateTimeStr = match.Value.Substring(1, match.Value.Length - 2);
+                if (ParseToDateTime(dateTimeStr, out var parsedDateTime))
+                {
+                    dateTimeParsed = true;
+                    break;
+                }
+            }
+
+            int titleEnd = paramStr.Length;
+            if (dateTimeParsed)
+            {
+                titleEnd = paramStr.IndexOf(dateTimeParenthesised);
+                if (titleEnd < titleStart)
+                {
+                    parsedTitle = null;
+                    return false;
+                }
+            }
+            
+            parsedTitle = paramStr.Substring(titleStart, titleEnd - titleStart).Trim();
+            return true;
+        }
+        
         /// <summary>
         ///     !수정 918065709668515881 (21/12/20 22:00)
         /// </summary>
@@ -180,11 +227,16 @@ namespace DiscordLostArkBot.Discord
         [Summary("기존 레이드 정보 수정")]
         public async Task ModifyRaid([Remainder] string paramStr)
         {
+            var userCommandMessage = Context.Message;
+
             var parseSuccessed = ParseModifyRaidCommandParam(paramStr, out var modifyRaidCommandParam);
             if (!parseSuccessed)
             {
-                await Context.Channel.SendMessageAsync("잘못된 입력값이 들어왔어요! 다음과 같은 형식으로 입력하셔야 해요.(중괄호도 포함해서!)\n" +
-                    $"!수정 {modifyRaidCommandParam.RaidDataId} ({DateTime.Now.AddHours(1).ToString(@"yy\/MM\/dd HH:mm")})");
+                ulong sampleId = modifyRaidCommandParam.RaidDataId;
+                if (sampleId == 0) sampleId = 123456789123456789;
+                await Context.Channel.SendMessageAsync("잘못된 입력값이 들어왔어요! 다음과 같은 형식으로 입력하셔야 해요.(괄호도 포함해서!)\n" +
+                    $"!수정 {sampleId.ToString("D18")} ({DateTime.Now.AddHours(1).ToString(@"yy\/MM\/dd HH:mm")})");
+                await userCommandMessage.DeleteAsync();
                 return;
             }
 
@@ -192,15 +244,18 @@ namespace DiscordLostArkBot.Discord
             {
                 await Context.Channel.SendMessageAsync($"수정 코드 {modifyRaidCommandParam.RaidDataId} 값을 가진 데이터를 찾지 못했어요.\n" +
                                                        $"값을 확인해 보시고, 관리자에게 연락하시거나 새로 파셔야 할 거 같아요!");
+                await userCommandMessage.DeleteAsync();
                 return;
             }
 
-            var modded = ServiceHolder.RaidInfo.ModifyRaidTime(modifyRaidCommandParam.RaidDataId,
+            var modded = ServiceHolder.RaidInfo.ModifyRaid(modifyRaidCommandParam.RaidDataId,
+                modifyRaidCommandParam.Title,
                 modifyRaidCommandParam.NewDateTime);
             if (!modded)
             {
                 await Context.Channel.SendMessageAsync($"수정 코드 {modifyRaidCommandParam.RaidDataId} 값을 가진 데이터의 수정에 실패했어요!\n" +
                                                        $"관리자에게 문의하시는 게 좋을 것 같아요...");
+                await userCommandMessage.DeleteAsync();
                 return;
             }
 
@@ -211,8 +266,11 @@ namespace DiscordLostArkBot.Discord
             {
                 await Context.Channel.SendMessageAsync($"수정 코드 {modifyRaidCommandParam.RaidDataId} 값을 가진 메세지를 찾지 못했어요!\n" +
                                                        $"문제가 계속되면 관리자에게 문의하시는 게 좋을 것 같아요...");
+                await userCommandMessage.DeleteAsync();
                 return;
             }
+
+            await userCommandMessage.DeleteAsync();
             
             await ServiceHolder.RaidInfo.RefreshDiscordRaidMessage(discordKey, targetMessage);
             await ServiceHolder.RaidInfo.RefreshNotionRaidPage(discordKey);
@@ -221,10 +279,21 @@ namespace DiscordLostArkBot.Discord
             var threadChannel = (await Context.Client.GetChannelAsync(threadUid)) as IThreadChannel;
             if (threadChannel != null)
             {
-                CultureInfo cultures = CultureInfo.CreateSpecificCulture("ko-KR");
-                await threadChannel.SendMessageAsync($"[{ServiceHolder.RaidInfo.GetRaidTitle(discordKey)}] 레이드의 시간을 " +
-                                                     $"[{ServiceHolder.RaidInfo.GetRaidTime(discordKey).UtcToKst().ToString("yyyy년 MM월 dd일 ddd요일 HH시 mm분", cultures)}]" +
-                                                     $"으로 수정했어요!");
+                if(string.IsNullOrWhiteSpace(modifyRaidCommandParam.Title) == false)
+                    await threadChannel.ModifyAsync(properties => properties.Name = modifyRaidCommandParam.Title);
+
+                if (modifyRaidCommandParam.NewDateTime == null && string.IsNullOrWhiteSpace(modifyRaidCommandParam.Title) == false)
+                {
+                    await threadChannel.SendMessageAsync($"레이드 이름이 {modifyRaidCommandParam.Title}로 변경되었어요!");
+                }
+                else
+                {
+                    CultureInfo cultures = CultureInfo.CreateSpecificCulture("ko-KR");
+                    await threadChannel.SendMessageAsync($"[{ServiceHolder.RaidInfo.GetRaidTitle(discordKey)}] 레이드의 시간을 " +
+                                                         $"[{ServiceHolder.RaidInfo.GetRaidTime(discordKey).UtcToKst().ToString("yyyy년 MM월 dd일 ddd요일 HH시 mm분", cultures)}]" +
+                                                         $"으로 수정했어요!");
+                    
+                }
             }
         }
 

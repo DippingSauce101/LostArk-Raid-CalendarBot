@@ -52,11 +52,19 @@ namespace DiscordLostArkBot.Service
             return raidInfo.DiscordMessageKey;
         }
 
-        public bool ModifyRaidTime(ulong dataId, DateTime utcDateTime)
+        public bool ModifyRaid(ulong dataId, string title, DateTime? utcDateTime)
         {
             var raidInfo = FindRaidInfo(dataId);
             if (raidInfo == null) return false;
-            raidInfo.RaidDateTimeUtc = utcDateTime;
+            if (string.IsNullOrWhiteSpace(title) == false)
+            {
+                raidInfo.Title = title;
+            }
+
+            if (utcDateTime.HasValue)
+            {
+                raidInfo.RaidDateTimeUtc = utcDateTime.Value;
+            }
             DB.Ins.SaveToFile(raidInfo);
             return true;
         }
@@ -217,6 +225,7 @@ namespace DiscordLostArkBot.Service
         {
             var raidInfo = FindRaidInfo(discordKey);
             if (raidInfo == null) return;
+            await raidInfo.RefreshUserCache();
             await NotionBotClient.Ins.UpdatePage(raidInfo.NotionCalenderPageId, raidInfo.GetNotionPageProperties());
         }
         
