@@ -279,8 +279,8 @@ namespace DiscordLostArkBot.Discord
             var threadChannel = (await Context.Client.GetChannelAsync(threadUid)) as IThreadChannel;
             if (threadChannel != null)
             {
-                if(string.IsNullOrWhiteSpace(modifyRaidCommandParam.Title) == false)
-                    await threadChannel.ModifyAsync(properties => properties.Name = modifyRaidCommandParam.Title);
+                // if(string.IsNullOrWhiteSpace(modifyRaidCommandParam.Title) == false)
+                //     await threadChannel.ModifyAsync(properties => properties.Name = modifyRaidCommandParam.Title);
 
                 if (modifyRaidCommandParam.NewDateTime == null && string.IsNullOrWhiteSpace(modifyRaidCommandParam.Title) == false)
                 {
