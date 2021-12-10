@@ -42,6 +42,7 @@
 ## Tokens.ini
 
 - 디스코드 및 노션 클라이언트가 접속하기 위해 Token 값들이 필요합니다.
+- [Tokens_Sample.ini](https://github.com/DippingSauce101/LostArk-Raid-CalendarBot/blob/0db2e73bab42ece2b314644bb4cf6075b6c7fd84/DiscordLostArkBot/Tokens_Sample.ini) 파일 참고
 - .exe 파일이 빌드된 경로에 Tokens.ini 파일을 생성한 뒤 값을 입력합니다.
   - DiscordBotToken
     - 디스코드 봇의 Auth Token 값을 입력합니다.
