@@ -54,9 +54,3 @@
     - 중간의 [캘린더_ID] 부분을 붙여넣으세요.
   - NotionCalendarUrl
     - 노션 캘린더 링크 값입니다.
-
-## Known Issue
-
-- 노션 API를 통해 일정을 추가할 경우, 강제로 UTC Time만이 입력되는 문제가 있습니다.
-- 캘린더 상에서는 제대로 표시되지만 클릭해서 열어보면 UTC Time이 출력되는데 정상적인 값이므로 놀라지 마세요.(한국 시간 -9시간)
-  - ![image](https://user-images.githubusercontent.com/94309745/142362241-225d9e8b-fc40-4aaf-8ef2-5c4fbbbe6cfb.png)
