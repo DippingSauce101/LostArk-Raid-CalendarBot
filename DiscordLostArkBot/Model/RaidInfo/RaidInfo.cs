@@ -235,7 +235,7 @@ namespace DiscordLostArkBot.Model.RaidInfo
                 Date = new TimeZoneDate
                 {
                     Start = kstRaidDateTime.ToIso8601(),
-                    End = kstRaidDateTime.AddHours(1).ToIso8601()
+                    End = null//kstRaidDateTime.AddHours(1).ToIso8601()
                 }
             });
             return propertyValues;
