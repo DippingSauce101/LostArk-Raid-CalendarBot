@@ -226,12 +226,22 @@ namespace DiscordLostArkBot.Service
             });
         }
 
-        public async Task RefreshNotionRaidPage(RaidInfo.DiscordKey discordKey)
+        public async Task<bool> RefreshNotionRaidPage(RaidInfo.DiscordKey discordKey)
         {
             var raidInfo = FindRaidInfo(discordKey);
-            if (raidInfo == null) return;
+            if (raidInfo == null) return false;
             await raidInfo.RefreshUserCache();
-            await NotionBotClient.Ins.UpdatePage(raidInfo.NotionCalenderPageId, raidInfo.GetNotionPageProperties());
+            try
+            {
+                await NotionBotClient.Ins.UpdatePage(raidInfo.NotionCalenderPageId, raidInfo.GetNotionPageProperties());
+                return true;
+            }
+            catch (NotionApiException ex)
+            {
+                Console.WriteLine("Notion api exception occured!");
+                Console.WriteLine(ex.ToString());
+                return false;
+            }
         }
 
         #endregion

@@ -6,8 +6,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Discord.Net.Labs" Version="3.4.8"/>
-        <PackageReference Include="Notion.Net" Version="2.2.1-preview-1.11.1.2021"/>
+        <PackageReference Include="Discord.Net.Labs" Version="3.4.8" />
+        <PackageReference Include="Notion.Net" Version="2.2.1-preview-1.11.1.2021" />
     </ItemGroup>
 
 </Project>
