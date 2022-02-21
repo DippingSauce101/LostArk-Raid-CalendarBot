@@ -29,6 +29,8 @@ namespace DiscordLostArkBot
                 Console.WriteLine("잘못된 토큰 값이 감지되었습니다. Tokens.ini 파일 내용물을 확인해 주세요.");
                 return;
             }
+            
+            Console.WriteLine($"Calendar url: {Settings.NotionCalendarUrl}");
 
             new Program().ProgramMain().GetAwaiter().GetResult();
         }

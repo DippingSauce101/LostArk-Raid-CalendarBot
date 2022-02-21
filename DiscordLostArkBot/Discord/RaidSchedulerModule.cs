@@ -7,6 +7,8 @@ using Discord;
 using Discord.Commands;
 using Discord.Rest;
 using DiscordLostArkBot.Constants;
+using DiscordLostArkBot.Discord.Command;
+using DiscordLostArkBot.Discord.Command.Parser;
 using DiscordLostArkBot.Model.RaidInfo;
 using DiscordLostArkBot.Notion;
 using DiscordLostArkBot.Service;
@@ -28,13 +30,24 @@ namespace DiscordLostArkBot.Discord
         }
 
         /// <summary>
-        ///     !4인 쿠크노말(21/12/20 20:00)
+        ///     !4인일정 쿠크노말(21/12/20 20:00)
         /// </summary>
         [Command("4인일정")]
         [Summary("4인 레이드 일정 제작")]
         public async Task FourRaid([Remainder] string paramStr)
         {
             await AddRaid(paramStr, RaidInfo.FourRaidRoles);
+        }
+        
+        /// <summary>
+        ///     멀티커맨드 찾기 귀찮아서 일단 걍 복붙...
+        ///     !4인 쿠크노말(21/12/20 20:00)
+        /// </summary>
+        [Command("4인")]
+        [Summary("4인 레이드 일정 제작")]
+        public async Task FourRaidShort([Remainder] string paramStr)
+        {
+            await FourRaid(paramStr);
         }
 
         /// <summary>
@@ -46,72 +59,16 @@ namespace DiscordLostArkBot.Discord
         {
             await AddRaid(paramStr, RaidInfo.EightRaidRoles);
         }
-
-        private bool ParseModifyRaidCommandParam(string paramStr, out ModifyRaidCommandParam modifyRaidCommandParam)
+        
+        /// <summary>
+        ///     멀티커맨드 찾기 귀찮아서 일단 걍 복붙...
+        ///     !8인 쿠크노말(21/12/20 20:00)
+        /// </summary>
+        [Command("8인")]
+        [Summary("8인 레이드 일정 제작")]
+        public async Task EightRaidShort([Remainder] string paramStr)
         {
-            var raidDataIdParsed = ParseRaidDataId(paramStr, out var parsedRaidDataId);
-            //title은 파싱 실패해도 노상관!
-            var titleParsed = ParseRaidTitle(paramStr, out var parsedRaidTitle);
-            var dateTimeParsed = ParseParenthesisedDateTimeFromString(paramStr, out var parsedDateTime);
-
-            modifyRaidCommandParam = new ModifyRaidCommandParam(parsedRaidDataId,
-                titleParsed ? parsedRaidTitle : null,
-                dateTimeParsed ? parsedDateTime : null);
-            return raidDataIdParsed && (dateTimeParsed || titleParsed);
-        }
-
-        private bool ParseRaidDataId(string paramStr, out ulong parsedRaidDataId)
-        {
-            var firstParam = paramStr.Split(' ').First();
-            if (string.IsNullOrWhiteSpace(firstParam))
-            {
-                parsedRaidDataId = 0;
-                return false;
-            }
-
-            if (ulong.TryParse(firstParam, out parsedRaidDataId)) return true;
-
-            return false;
-        }
-
-        private bool ParseRaidTitle(string paramStr, out string parsedTitle)
-        {
-            var firstParam = paramStr.Split(' ').First();
-            if (string.IsNullOrWhiteSpace(firstParam))
-            {
-                parsedTitle = null;
-                return false;
-            }
-
-            var titleStart = paramStr.IndexOf(firstParam) + firstParam.Length;
-
-            var parenRegEx = new Regex(@"\(([^)]*)\)");
-            var dateTimeParsed = false;
-            string dateTimeParenthesised = null;
-            foreach (Match match in parenRegEx.Matches(paramStr))
-            {
-                dateTimeParenthesised = match.Value;
-                var dateTimeStr = match.Value.Substring(1, match.Value.Length - 2);
-                if (ParseToDateTime(dateTimeStr, out var parsedDateTime))
-                {
-                    dateTimeParsed = true;
-                    break;
-                }
-            }
-
-            var titleEnd = paramStr.Length;
-            if (dateTimeParsed)
-            {
-                titleEnd = paramStr.IndexOf(dateTimeParenthesised);
-                if (titleEnd < titleStart)
-                {
-                    parsedTitle = null;
-                    return false;
-                }
-            }
-
-            parsedTitle = paramStr.Substring(titleStart, titleEnd - titleStart).Trim();
-            return true;
+            await EightRaid(paramStr);
         }
 
         /// <summary>
@@ -123,8 +80,18 @@ namespace DiscordLostArkBot.Discord
         {
             var userCommandMessage = Context.Message;
 
-            var parseSuccessed = ParseModifyRaidCommandParam(paramStr, out var modifyRaidCommandParam);
-            if (!parseSuccessed)
+            ModifyRaidCommandParam modifyRaidCommandParam;
+            bool parsed;
+            if (Context.Channel is IThreadChannel)
+            {
+                parsed = CommandParser.ModifyRaidInThread.Parse(paramStr, out modifyRaidCommandParam, Context.Channel);
+            }
+            else
+            {
+                parsed = CommandParser.ModifyRaid.Parse(paramStr, out modifyRaidCommandParam);
+            }
+
+            if (!parsed)
             {
                 var sampleId = modifyRaidCommandParam.RaidDataId;
                 if (sampleId == 0) sampleId = 123456789123456789;
@@ -207,7 +174,7 @@ namespace DiscordLostArkBot.Discord
                 return;
             }
 
-            var parseSuccessed = ParseRaidCommandParam(paramStr, out var parsedParam);
+            var parseSuccessed = CommandParser.CreateRaid.Parse(paramStr, out var parsedParam);
             if (!parseSuccessed)
                 await Context.Channel.SendMessageAsync("레이드 일정이 몇 시인지 잘 모르겠어요. 일단은 한 시간 뒤로 설정해둘게요!\n" +
                                                        "도움말이 필요하시면 !도움 명령어를 입력하세요!");
@@ -258,107 +225,5 @@ namespace DiscordLostArkBot.Discord
                 }
             }
         }
-
-        private struct ModifyRaidCommandParam
-        {
-            public readonly ulong RaidDataId;
-            public readonly string Title;
-            public readonly DateTime? NewDateTime;
-
-            public ModifyRaidCommandParam(ulong raidDataId, string title, DateTime? newDateTime)
-            {
-                RaidDataId = raidDataId;
-                Title = title;
-                NewDateTime = newDateTime;
-            }
-        }
-
-        #region Raid Command Pameter Logics
-
-        /// <summary>
-        ///     디스코드 스트링을 직접 파싱한다.
-        /// </summary>
-        private struct RaidCommandParam
-        {
-            public readonly string Title;
-            public readonly DateTime Time;
-
-            public RaidCommandParam(string title, DateTime time)
-            {
-                Title = title;
-                Time = time;
-            }
-        }
-
-        private bool ParseRaidCommandParam(string paramStr, out RaidCommandParam raidCommandParam)
-        {
-            var parseSuccessed = ParseParenthesisedDateTimeFromString(paramStr, out var parsedDateTime);
-            var title = ParseTitleWithoutDateTime(paramStr);
-            raidCommandParam = new RaidCommandParam(title, parsedDateTime);
-            return parseSuccessed;
-        }
-
-        /// <summary>
-        ///     중괄호 안에 DateTime 형식의 스트링이 있다면 RegEx로 찾아내서 파싱해 <b>UTC</b> DateTime 리턴.
-        /// </summary>
-        /// <param name="str"></param>
-        /// <param name="parseResult"></param>
-        /// <returns></returns>
-        private bool ParseParenthesisedDateTimeFromString(string str, out DateTime parseResult)
-        {
-            var parenRegEx = new Regex(@"\(([^)]*)\)");
-            var parsedDateTime = DateTime.Now.AddHours(1);
-            var parseSuccessed = false;
-
-            foreach (Match match in parenRegEx.Matches(str))
-            {
-                var dateTimeStr = match.Value.Substring(1, match.Value.Length - 2);
-                if (ParseToDateTime(dateTimeStr, out parsedDateTime))
-                {
-                    parseSuccessed = true;
-                    break;
-                }
-            }
-
-            parseResult = parsedDateTime.KstToUtc();
-            return parseSuccessed;
-        }
-
-        /// <summary>
-        ///     중괄호 안에 DateTime 형식의 스트링이 있다면 제거하고 리턴.
-        /// </summary>
-        /// <param name="str"></param>
-        /// <returns></returns>
-        private string ParseTitleWithoutDateTime(string str)
-        {
-            var parenRegEx = new Regex(@"\(([^)]*)\)");
-            var title = str;
-            foreach (Match match in parenRegEx.Matches(str))
-            {
-                var dateTimeStr = match.Value.Substring(1, match.Value.Length - 2);
-                if (ParseToDateTime(dateTimeStr, out var parsedDateTime))
-                {
-                    title = title.Replace(match.Value, "");
-                    break;
-                }
-            }
-
-            return title;
-        }
-
-
-        private bool ParseToDateTime(string str, out DateTime parsedDateTime)
-        {
-            if (DateTime.TryParse(str, out var parsed))
-            {
-                parsedDateTime = parsed;
-                return true;
-            }
-
-            parsedDateTime = DateTime.Now.AddHours(1);
-            return false;
-        }
-
-        #endregion
     }
 }

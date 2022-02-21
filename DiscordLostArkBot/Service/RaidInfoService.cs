@@ -50,6 +50,13 @@ namespace DiscordLostArkBot.Service
             if (raidInfo == null) throw new NullReferenceException($"RaidInfo with dataId {dataId} NOT exists!");
             return raidInfo.DiscordMessageKey;
         }
+        
+        public RaidInfo.DiscordKey DiscordKeyFromThreadUid(ulong threadId)
+        {
+            var raidInfo = FindRaidInfoFromThreadUid(threadId);
+            if (raidInfo == null) throw new NullReferenceException($"RaidInfo with thread id {threadId} NOT exists!");
+            return raidInfo.DiscordMessageKey;
+        }
 
         public bool ModifyRaid(ulong dataId, string title, DateTime? utcDateTime)
         {
@@ -151,6 +158,13 @@ namespace DiscordLostArkBot.Service
             if (raidInfo == null) throw new NullReferenceException("Data not found!");
             return raidInfo.RaidDateTimeUtc;
         }
+        
+        public ulong GetRaidId(RaidInfo.DiscordKey discordKey)
+        {
+            var raidInfo = FindRaidInfo(discordKey);
+            if (raidInfo == null) throw new NullReferenceException("Data not found!");
+            return raidInfo.DataId;
+        }
 
         private RaidInfo FindRaidInfo(ulong dataId)
         {
@@ -165,6 +179,11 @@ namespace DiscordLostArkBot.Service
         private RaidInfo FindRaidInfo(RaidInfo.DiscordKey discordKey)
         {
             return _raidInfoCollection.FindRaidInfo(discordKey.ChannelId, discordKey.MessageId);
+        }
+        
+        private RaidInfo FindRaidInfoFromThreadUid(ulong threadUid)
+        {
+            return _raidInfoCollection.FindRaidInfoFromThreadUid(threadUid);
         }
 
         #region Notion Logics

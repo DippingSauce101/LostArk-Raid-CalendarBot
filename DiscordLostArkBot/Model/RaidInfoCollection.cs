@@ -40,6 +40,17 @@ namespace DiscordLostArkBot.Model
                 .FirstOrDefault();
         }
 
+        /// <summary>
+        /// 레이드 스레드 id에서 연관된 RaidInfo 불러오기
+        /// </summary>
+        /// <param name="threadId">스레드 uid</param>
+        /// <returns></returns>
+        public RaidInfo.RaidInfo FindRaidInfoFromThreadUid(ulong threadId)
+        {
+            return _raidInfos.Where(info => { return info.DiscordMessageThreadId == threadId; })
+                .FirstOrDefault();
+        }
+
         public RaidInfo.RaidInfo ElementAt(int idx)
         {
             return _raidInfos.ElementAt(idx);
